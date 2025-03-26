@@ -36,10 +36,17 @@ const PantallaPrincipal = ({ navigation }: any) => {
           renderItem={({ item }) => <Item title={item.title} />}
           keyExtractor={item => item.id}
         />
+           <Button title="Prueba Cognitiva Fluencia Verbal Semantica " 
+          onPress={() => { 
+            navigation.navigate('PantallaPruebaCognitivaFluencia');
+          }} />
       </SafeAreaView>
+
     </SafeAreaProvider>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
