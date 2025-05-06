@@ -7,8 +7,10 @@ import {
   TextInput,
   Image,
   StyleSheet,
+  Alert,
 } from 'react-native';
-
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 // Preguntas del formulario
 const preguntas = [
   { pregunta: '¿Tiene dificultades para moverse dentro de su hogar?', tipo: 'si_no' },
@@ -38,7 +40,7 @@ const calcularCalificacion = (respuestas: (string | number | null)[]) => {
 };
 
 const PantallaPruebaEvaBarrera = ({ navigation, route }: any) => {
-  const { total: totalAnterior } = route.params || {};  // Recibimos el total anterior
+  const { total: totalAnterior } = route.params || {};
   const [index, setIndex] = useState(0);
   const [respuestas, setRespuestas] = useState<Array<string | number | null>>(
     Array(preguntas.length).fill(null)
@@ -98,15 +100,33 @@ const PantallaPruebaEvaBarrera = ({ navigation, route }: any) => {
           <Button title="Siguiente" onPress={() => setIndex(index + 1)} />
         ) : (
           <Button
-            title="Finalizar"
-            onPress={() => {
-              const calif = calcularCalificacion(respuestas);
-              setTotal(total + parseFloat(calif)); // Actualizamos el total con la calificación de esta prueba
-              navigation.navigate('PantallaPruebas', {
-                total: total + parseFloat(calif),  // Pasamos el total actualizado
-              });
-            }}
-          />
+  title="Finalizar"
+  onPress={async () => {
+    try {
+      const calif = calcularCalificacion(respuestas);
+      const nuevaTotal = total + parseFloat(calif);
+      setTotal(nuevaTotal); // Actualizamos total localmente
+
+
+      const pacienteId = route.params?.pacienteId;
+      if (pacienteId) {
+        await guardarResultado(pacienteId, 'Evaluacion de Barrera', parseFloat(calif));
+        await guardarPruebaFirebase(pacienteId, 'Evaluacion de Barrera', parseFloat(calif));
+        console.log('Resultado guardado exitosamente.');
+      } else {
+        console.warn('No se proporcionó pacienteId.');
+      }
+
+
+      navigation.navigate('PantallaPruebas', {
+        total: nuevaTotal,
+      });
+    } catch (error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
+  }}
+/>
         )}
       </View>
 

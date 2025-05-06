@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { ImageBackground, Button, StyleSheet, Text, TextInput, Alert, ScrollView } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
-const PantallaPruebaMOCA = ({ navigation }: any) => {
+const PantallaPruebaMOCA = ({ navigation,route }: any) => {
+  const { pacienteId } = route.params;
   const [nombrePaciente] = useState('');
   const [orientacion, setOrientacion] = useState('');
   const [atencion, setAtencion] = useState('');
@@ -16,10 +19,17 @@ const PantallaPruebaMOCA = ({ navigation }: any) => {
 
   const image = { uri: 'https://img.freepik.com/vector-gratis/fondo-elegante-patron-damasco-marco-dorado_1048-20169.jpg?semt=ais_hybrid' };
 
-  const handleSubmit = () => {
+  const handleSubmit = async() => {
+    try {
     Alert.alert('Formulario enviado', `Paciente: ${nombrePaciente}, Puntaje Final: ${puntajeFinal}`);
 
+    await guardarResultado(pacienteId, 'MOCA', parseInt(puntajeFinal)); // SQLite
+    await guardarPruebaFirebase(pacienteId, 'MOCA', parseInt(puntajeFinal));
     navigation.navigate('PantallaPruebas', {total: puntajeFinal });
+    } catch (error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   return (

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
-const PantallaPruebaCESD7 = ({ navigation }: any) => {
-
+const PantallaPruebaCESD7 = ({ navigation, route }: any) => {
+  const { pacienteId } = route.params;
   const questions = [
     '1. ¿Se sintió decaído(a)?',
     '2. ¿Tuvo problemas para dormir bien?',
@@ -14,7 +16,7 @@ const PantallaPruebaCESD7 = ({ navigation }: any) => {
   ];
 
   const [answers, setAnswers] = useState(Array(7).fill(''));
-  const [score, setScore] = useState(null);
+  const [score, setScore] = useState(0);
   const [hasSymptoms, setHasSymptoms] = useState<boolean | null>(null);
 
 
@@ -34,13 +36,20 @@ const PantallaPruebaCESD7 = ({ navigation }: any) => {
     }
   };
 
-  const evaluar = () => {
-    const total = answers.reduce((acc, curr) => acc + getPoints(curr), 0);
-    setScore(total);
-    setHasSymptoms(total >= 5);
+  const evaluar = async () => {
+    try {
+      const total = answers.reduce((acc, curr) => acc + getPoints(curr), 0);
+      setScore(total);
+      setHasSymptoms(total >= 5);
+      guardarResultado(pacienteId, 'CESD7', total);
+      guardarPruebaFirebase(pacienteId, 'CESD7', total);
 
     // Navegar y devolver puntuación a pantalla anterior
-    navigation.navigate('PantallaPruebas', {total: total });
+    navigation.navigate('PantallaPruebas', {total: total, pacienteId: pacienteId });
+    } catch (error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   return (
@@ -77,7 +86,7 @@ const PantallaPruebaCESD7 = ({ navigation }: any) => {
         <Text style={styles.buttonText}>Evaluar</Text>
       </TouchableOpacity>
 
-      {score !== null && (
+      {score !==    0 && (
         <View style={styles.resultContainer}>
           <Text style={styles.resultTitle}>Resultado:</Text>
           <Text style={styles.resultText}>

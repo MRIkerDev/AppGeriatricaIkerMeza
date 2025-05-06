@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, SafeAreaView, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 const CATEGORIAS = ['animales', 'supermercado', 'frutas'] as const;
 const FILAS_TOTALES = 15;
 
-type Categoria = (typeof CATEGORIAS)[number]; 
-type EntradaPalabra = { animales: string; supermercado: string; frutas: string }; 
+type Categoria = (typeof CATEGORIAS)[number];
+type EntradaPalabra = { animales: string; supermercado: string; frutas: string };
 
-const PantallaPruebaCognitivaFluencia = ({ navigation }: any) => {
+const PantallaPruebaCognitivaFluencia = ({ navigation, route }: any) => {
+  console.log('Params recibidos en PantallaPruebaCognitivaFluencia:', route.params);
+  const { pacienteId } = route.params;
   const [Total, setTotal] = useState(0);
   const [Aciertos, setAciertos] = useState(0);
   const [Errores, setErrores] = useState(0);
@@ -28,27 +31,35 @@ const PantallaPruebaCognitivaFluencia = ({ navigation }: any) => {
 
   const manejarCambioInput = (texto: string, indiceFila: number, categoria: Categoria) => {
     const nuevasPalabras = [...palabras];
-    nuevasPalabras[indiceFila] = { ...nuevasPalabras[indiceFila], [categoria]: texto }; 
+    nuevasPalabras[indiceFila] = { ...nuevasPalabras[indiceFila], [categoria]: texto };
     setPalabras(nuevasPalabras);
   };
 
   const manejarAciertos = (valor: string) => {
     const aciertos = parseInt(valor) || 0;
     setAciertos(aciertos);
-    setTotal(aciertos - Errores); 
+    setTotal(aciertos - Errores);
   };
 
   const manejarErrores = (valor: string) => {
     const errores = parseInt(valor) || 0;
     setErrores(errores);
-    setTotal(Aciertos - errores); 
+    setTotal(Aciertos - errores);
   };
 
-  const manejarEnvio = () => {
-    navigation.navigate('PantallaPruebas', { total: Total });
-    Alert.alert('Respuestas guardadas correctamente');
-  };
+  const manejarEnvio = async () => {
+    try {
 
+
+      await guardarResultado(pacienteId, 'Fluencia Verbal Semántica', Total); // SQLite
+      await guardarPruebaFirebase(pacienteId, 'Fluencia Verbal Semántica', Total);
+      Alert.alert('Resultado guardado correctamente');
+      navigation.navigate('PantallaPruebas', { total: Total, pacienteId });
+    } catch (error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
+  };
   return (
     <SafeAreaProvider>
       <SafeAreaView style={estilos.contenedor}>
@@ -97,7 +108,7 @@ const PantallaPruebaCognitivaFluencia = ({ navigation }: any) => {
             <TextInput
               style={estilos.resultados}
               value={Total.toString()}
-              editable={false} 
+              editable={false}
             />
           </SafeAreaView>
 

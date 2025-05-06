@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Button, StyleSheet, FlatList, Alert } from 'react-native';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { guardarResultado } from '../../../database/database';
 
 const activities = [
   { id: '1', name: 'Alimentación' },
@@ -10,7 +12,8 @@ const activities = [
   { id: '6', name: 'Uso del sanitario' },
 ];
 
-const PantallaPruebaKatz = ({ navigation }: any) => {
+const PantallaPruebaKatz = ({ navigation, route }: any) => {
+  const { pacienteId } = route.params;
   const [scores, setScores] = useState<{ [key: string]: number }>({});
 
   // Función para alternar entre independiente (1) y dependiente (0)
@@ -25,9 +28,22 @@ const PantallaPruebaKatz = ({ navigation }: any) => {
   const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
 
   // Función para guardar y navegar al total
-  const manejarEnvio = () => {
-    navigation.navigate('PantallaPruebas', { total: totalScore }); // Enviar el puntaje total
+  const manejarEnvio = async () => {
+    try {
+      if (pacienteId) {
+        await guardarResultado(pacienteId, 'Indice de Katz', totalScore);
+        await guardarPruebaFirebase(pacienteId, 'Indice de Katz', totalScore);
+        console.log('Resultado guardado exitosamente.');
+      } else {
+        console.warn('No se proporcionó pacienteId.');
+      }
+
+    navigation.navigate('PantallaPruebas', { total: totalScore, pacienteId: pacienteId }); // Enviar el puntaje total
     Alert.alert('Respuestas guardadas correctamente');
+  } catch (error) {
+    console.error('Error al guardar el resultado:', error);
+    Alert.alert('Error al guardar el resultado');
+  }
   };
 
   return (

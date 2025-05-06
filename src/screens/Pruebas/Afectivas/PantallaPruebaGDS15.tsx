@@ -7,6 +7,8 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
 const preguntasGDS15 = [
   { id: '1', texto: '¿Está básicamente satisfecho con su vida?' },
@@ -26,8 +28,9 @@ const preguntasGDS15 = [
   { id: '15', texto: '¿Piensa que la mayoría de las personas están mejor que usted?' },
 ];
 
-const PantallaPruebaGDS15 = ({ navigation }: any) => {
+const PantallaPruebaGDS15 = ({ navigation, route }: any) => {
   const [respuestas, setRespuestas] = useState<RespuestasGDS15>({});
+  const { pacienteId } = route.params;
 
   const handleRespuesta = (id: string, respuesta: 'Sí' | 'No') => {
     setRespuestas(prev => ({ ...prev, [id]: respuesta }));
@@ -48,10 +51,17 @@ const PantallaPruebaGDS15 = ({ navigation }: any) => {
     }, 0);
   };
 
-  const handleRegistrar = () => {
-    const resultado = calcularResultado();
-    Alert.alert('Resultado', `El puntaje de la prueba GDS-15 es: ${resultado}`);
-    navigation.navigate('PantallaPruebas', { total: resultado }); // ← ajusta el nombre si es diferente
+  const handleRegistrar = async () => {
+    try{
+      guardarResultado(pacienteId, 'GDS-15', calcularResultado());
+      guardarPruebaFirebase(pacienteId, 'GDS-15', calcularResultado());
+      const resultado = calcularResultado();
+      Alert.alert('Resultado', `El puntaje de la prueba GDS-15 es: ${resultado}`);
+      navigation.navigate('PantallaPruebas', { total: resultado, pacienteId });
+    } catch (error) {
+      console.error('Error al registrar resultado:', error);
+      Alert.alert('Error al registrar resultado');
+    }
   };
 
   return (

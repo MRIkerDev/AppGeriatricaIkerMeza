@@ -8,6 +8,8 @@ import {
   Alert,
   TextInput,
 } from 'react-native';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
 // Tipos para cada respuesta por pregunta
 type Respuesta = {
@@ -76,7 +78,8 @@ const opcionesE = [
   { valor: '2', texto: 'Mujer' },
 ];
 
-const PantallaPruebaMaltrato = ({ navigation }: any) => {
+const PantallaPruebaMaltrato = ({ navigation, route }: any) => {
+  const { pacienteId } = route.params || {};
   const [respuestas, setRespuestas] = useState<{ [key: string]: Respuesta }>({});
 
   const setValor = (id: string, campo: keyof Respuesta, valor: string) => {
@@ -89,7 +92,8 @@ const PantallaPruebaMaltrato = ({ navigation }: any) => {
     }));
   };
 
-  const guardar = () => {
+  const guardar = async() => {
+    try{
     const incompletas = preguntas.filter((p) => !respuestas[p.id] || respuestas[p.id].A === '');
     if (incompletas.length > 0) {
       Alert.alert('Error', 'Debes responder la columna A de todas las preguntas.');
@@ -109,10 +113,15 @@ const PantallaPruebaMaltrato = ({ navigation }: any) => {
     if (navigation && navigation.navigate) {
       navigation.navigate('PantallaPruebas', { total: puntaje }); // o el nombre que uses
     }
-
+    await guardarResultado(pacienteId, 'Maltrato', puntaje);
+    await guardarPruebaFirebase(pacienteId, 'Maltrato', puntaje);
     Alert.alert('Evaluación completada', `Puntaje total: ${puntaje}`);
     console.log('Puntaje maltrato:', puntaje);
     console.log('Respuestas completas:', respuestas);
+    } catch(error){
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   const categorias = [...new Set(preguntas.map((p) => p.categoria))];

@@ -4,8 +4,11 @@ import {
   TextInput, Alert, ScrollView,
 } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
-const PantallaPruebaMiniMental = ({ navigation }: any) => {
+const PantallaPruebaMiniMental = ({ navigation, route }: any) => {
+  const { pacienteId } = route.params || {};
   const [alfabetizacion, setAlfabetizacion] = useState('');
   const [escolaridad, setEscolaridad] = useState('');
   const [orientacion, setOrientacion] = useState('');
@@ -16,14 +19,20 @@ const PantallaPruebaMiniMental = ({ navigation }: any) => {
   const [observaciones, setObservaciones] = useState('');
   const [puntuacion, setPuntuacion] = useState('');
 
-  const handleAceptar = () => {
-    // Aquí puedes hacer lo que necesites con la puntuación
+  const handleAceptar = async () => {
+    try {
+   await guardarResultado(pacienteId, 'MiniMental', parseInt(puntuacion)); // SQLite
+       await guardarPruebaFirebase(pacienteId, 'MiniMental', parseInt(puntuacion));
     console.log('Puntuación del Mini-Mental:', puntuacion);
 
     Alert.alert('Puntuación guardada', `Puntuación: ${puntuacion}`);
 
     // Si necesitas enviar esto a otra pantalla,
-    navigation.navigate('PantallaPruebas', {total: puntuacion });
+    navigation.navigate('PantallaPruebas', {total: parseInt(puntuacion), pacienteId });
+    } catch (error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   return (

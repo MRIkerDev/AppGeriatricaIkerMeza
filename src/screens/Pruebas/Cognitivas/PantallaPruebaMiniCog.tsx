@@ -8,19 +8,28 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
-export default function PantallaPruebaMiniCog({ navigation }: any) {
+export default function PantallaPruebaMiniCog({ navigation, route }: any) {
+  const { pacienteId } = route.params || {};
   const [palabrasRecordadas, setPalabrasRecordadas] = useState('');
   const [puntuacionReloj, setPuntuacionReloj] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    try {
     const palabras = parseInt(palabrasRecordadas) || 0;
     const reloj = parseInt(puntuacionReloj) || 0;
     const total = palabras + reloj;
 
-    Alert.alert('Evaluación completada', `Puntuación total: ${total}`);
-
-    navigation.navigate('PantallaPruebas', { total });
+      await guardarResultado(pacienteId, 'MiniCog', total); // SQLite
+      await guardarPruebaFirebase(pacienteId, 'MiniCog', total);
+      Alert.alert('Resultado guardado correctamente');
+      navigation.navigate('PantallaPruebas', { total: total, pacienteId });
+    } catch (error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   return (

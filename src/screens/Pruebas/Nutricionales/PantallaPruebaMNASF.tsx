@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { StyleSheet, Text,View, TouchableOpacity,Button } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { Alert } from 'react-native';
 // Fuera de PantallaPruebaMNASF
 const RadioButton = ({ selected, onPress, label }: any) => (
   <TouchableOpacity style={styles.option} onPress={onPress}>
@@ -9,7 +12,8 @@ const RadioButton = ({ selected, onPress, label }: any) => (
     <Text>{label}</Text>
   </TouchableOpacity>
 );
-const PantallaPruebaMNASF = ({ navigation }: any) => {
+const PantallaPruebaMNASF = ({ navigation, route }: any) => {
+  const { pacienteId } = route.params;
   const [answers, setAnswers] = useState({
     apetito: '',
     perdidaPeso: '',
@@ -39,7 +43,9 @@ const PantallaPruebaMNASF = ({ navigation }: any) => {
     setPuntaje(prev => ({ ...prev, [question]: score }));
   };
 
-  const calcularPuntuacion = () => {
+  const calcularPuntuacion = async() => {
+    try{
+
     const total = Object.values(puntaje).reduce((sum, score) => sum + score, 0);
     setTotalScore(total);
 
@@ -49,9 +55,14 @@ const PantallaPruebaMNASF = ({ navigation }: any) => {
     else {clasif = 'Malnutrición';}
 
     setClasificacion(clasif);
-
+    await guardarResultado(pacienteId, 'MNASF', total);
+      await guardarPruebaFirebase(pacienteId, 'MNASF', total);
     // Navegar aquí directamente usando el total calculado
-    navigation.navigate('PantallaPruebas', { total });
+    navigation.navigate('PantallaPruebas', { total:total, pacienteId: pacienteId });
+    } catch (error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   return (

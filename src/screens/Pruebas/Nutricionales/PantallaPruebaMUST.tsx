@@ -10,15 +10,21 @@ import {
   Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker'; // Usa este si da error con 'react-native'
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
-const PantallaPruebaMUST = ({ navigation }: any) => {
+const PantallaPruebaMUST = ({ navigation, route }: any) => {
+  const { pacienteId } = route.params || {};
   const [imc, setImc] = useState(0);
   const [pesoPerdido, setPesoPerdido] = useState(0);
   const [enfermedadAguda, setEnfermedadAguda] = useState<boolean | null>(null);
   const [puntajeTotal, setPuntajeTotal] = useState<null | number>(null);
   const [clasificacion, setClasificacion] = useState('');
 
-  const calcularResultado = () => {
+  const calcularResultado = async() => {
+    try{
+
+
     if (enfermedadAguda === null) {
       Alert.alert('Por favor, responde si hay enfermedad aguda.');
       return;
@@ -32,7 +38,13 @@ const PantallaPruebaMUST = ({ navigation }: any) => {
 
     setPuntajeTotal(total );
     setClasificacion(clasif);
-    navigation.navigate('PantallaPruebas', { total: total });
+    await guardarResultado(pacienteId, 'MUST', total);
+    await guardarPruebaFirebase(pacienteId, 'MUST', total);
+    navigation.navigate('PantallaPruebas', { total: total, pacienteId: pacienteId });
+    } catch (error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   return (

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
-const PantallaPruebaSARCF = ({ navigation }: any) => {
+const PantallaPruebaSARCF = ({ navigation, route }: any) => {
+  const { pacienteId } = route.params || {};
   const [strength, setStrength] = useState('');
   const [assistance, setAssistance] = useState('');
   const [riseFromChair, setRiseFromChair] = useState('');
@@ -10,14 +13,21 @@ const PantallaPruebaSARCF = ({ navigation }: any) => {
   const [falls, setFalls] = useState('');
   const [totalScore, setTotalScore] = useState(0);
 
-  const calculateScore = () => {
+  const calculateScore = async() => {
+try{
     const scores = [strength, assistance, riseFromChair, climbStairs, falls].map((val) => parseInt(val) || 0);
     const sum = scores.reduce((acc, num) => acc + num, 0);
     setTotalScore(sum);
 
     const result = sum >= 4 ? 'Alta probabilidad de sarcopenia' : 'Baja probabilidad de sarcopenia';
+    await guardarResultado(pacienteId, 'SARCF', sum);
+    await guardarPruebaFirebase(pacienteId, 'SARCF', sum);
     Alert.alert('Resultado', `Puntaje total: ${sum}\nInterpretación: ${result}`);
-    navigation.navigate('PantallaPruebas', { total: sum });
+    navigation.navigate('PantallaPruebas', { total: sum, pacienteId: pacienteId });
+      } catch(error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   return (

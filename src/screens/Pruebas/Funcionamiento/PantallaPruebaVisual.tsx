@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, Button, Alert, ScrollView } from 'react-native';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
 type NavigationProps = {
   navigation: any;
   route: any;
 };
 
-const PantallaPruebaVisual = ({ navigation }: NavigationProps) => {
+const PantallaPruebaVisual = ({ navigation, route }: NavigationProps) => {
+  const { pacienteId } = route.params;
   const [odRosenbaum, setOdRosenbaum] = useState('');
   const [oiRosenbaum, setOiRosenbaum] = useState('');
   const [odSnellen, setOdSnellen] = useState('');
   const [oiSnellen, setOiSnellen] = useState('');
 
-  const calcularResultado = () => {
+  const calcularResultado = async () => {
+    try{
+
+
+
     const resultadoRosenbaumOd = parseFloat(odRosenbaum);
     const resultadoRosenbaumOi = parseFloat(oiRosenbaum);
     const resultadoSnellenOd = parseFloat(odSnellen);
@@ -48,9 +55,14 @@ const PantallaPruebaVisual = ({ navigation }: NavigationProps) => {
     }
 
     Alert.alert('Resultado', mensaje);
-
+    await guardarResultado(pacienteId, 'Vision', total);
+    await guardarPruebaFirebase(pacienteId, 'Vision', total);
     // Navegar y pasar el resultado
-    navigation.navigate('PantallaPruebas', { total: total });
+    navigation.navigate('PantallaPruebas', { total: total, pacienteId: pacienteId });
+    } catch (error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   return (

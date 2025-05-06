@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, TextInput, StyleSheet, PermissionsAndroid, Platform } from 'react-native';
+import { View, Text, Button, TextInput, StyleSheet, PermissionsAndroid, Platform, Alert } from 'react-native';
 //  acelerómetro de react-native-sensors
 import { accelerometer, gyroscope } from 'react-native-sensors';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
 
-const PantallaPruebaFuncionamiento = ({ navigation }: any) => {
+const PantallaPruebaFuncionamiento = ({ navigation, route }: any) => {
+  const { pacienteId } = route.params;
   const [tiempo, setTiempo] = useState(0);
   const [corriendo, setCorriendo] = useState(false);
   const [distancia, setDistancia] = useState('');
@@ -85,7 +88,15 @@ const PantallaPruebaFuncionamiento = ({ navigation }: any) => {
     setVelocidad(0);
   };
 
-  const enviarDeVuelta = () => {
+  const enviarDeVuelta = async () => {
+    try {
+      if (pacienteId) {
+        await guardarResultado(pacienteId, 'Velocidad de la marcha', velocidad);
+        await guardarPruebaFirebase(pacienteId, 'Velocidad de la marcha', velocidad);
+        console.log('Resultado guardado exitosamente.');
+      } else {
+        console.warn('No se proporcionó pacienteId.');
+      }
     let obs = observaciones;
     if (velocidad < 0.8) {
       obs = 'Disminución de desempeño como parte de los componentes que definen a la sarcopenia. ' + obs;
@@ -94,7 +105,11 @@ const PantallaPruebaFuncionamiento = ({ navigation }: any) => {
       obs = 'Se predice riesgo de desenlaces adversos. ' + obs;
     }
 
-    navigation.navigate('PantallaPruebas', { total: velocidad });
+    navigation.navigate('PantallaPruebas', { total: velocidad, pacienteId: pacienteId });
+    } catch (error) {
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   return (

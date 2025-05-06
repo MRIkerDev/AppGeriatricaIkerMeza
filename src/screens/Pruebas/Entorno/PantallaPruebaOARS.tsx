@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, Button, Alert, ScrollView } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { guardarResultado } from '../../../database/database';
+import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 
 
 const evaluarRecursosSociales = (answers: { convivencia?: any; contactos?: any; telefono?: any; confianza?: any; cuantasPersonas?: any; visitas?: any; tipoCuidado?: any; }) => {
@@ -96,7 +98,8 @@ if (
 return '6. Recursos sociales totalmente deteriorados.';
 
 };
-const PantallaPruebaOARS = ({ navigation }: any) => {
+const PantallaPruebaOARS = ({ navigation, route }: any) => {
+  const { pacienteId } = route.params || {};
   const [answers, setAnswers] = useState<any>({});
   const [resultado, setResultado] = useState('');
 
@@ -134,7 +137,8 @@ const PantallaPruebaOARS = ({ navigation }: any) => {
     </TouchableOpacity>
   );
 
-  const guardarRespuestas = () => {
+  const guardarRespuestas = async () => {
+    try{
     const camposObligatorios = [
       'convivencia',
       'contactos',
@@ -172,8 +176,13 @@ const PantallaPruebaOARS = ({ navigation }: any) => {
     const resultadoTexto = evaluarRecursosSociales(answers);
     setResultado(resultadoTexto);
     Alert.alert('Respuestas guardadas');
-
-   navigation.navigate('PantallaPruebas', { total: resultadoTexto });
+    await guardarResultado(pacienteId, 'OARS', parseInt(resultadoTexto));
+    await guardarPruebaFirebase(pacienteId, 'OARS', parseInt(resultadoTexto));
+   navigation.navigate('PantallaPruebas', { total: parseInt(resultadoTexto), pacienteId: pacienteId });
+    } catch(error){
+      console.error('Error al guardar el resultado:', error);
+      Alert.alert('Error al guardar el resultado');
+    }
   };
 
   return (

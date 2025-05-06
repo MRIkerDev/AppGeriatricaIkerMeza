@@ -14,9 +14,12 @@ import PantallaClima from '../screens/MenuLateral/PantallaClima';
 import PantallaVideo from '../screens/MenuLateral/PantallaVideo';
 
 //Pantallas de Practicas
-import PruebaBaseDatosSQLite from '../screens/PracticasClase/PruebaBaseDatosSQLite';
-import PruebaBaseDatosFirebase from '../screens/PracticasClase/PruebaBaseDatosFirebase';
 
+
+//Pantallas
+import PantallaVerPaciente from '../screens/PantallaVerPaciente';
+import PantallaEditarPaciente from '../screens/PantallaEditarPaciente';
+import PantallaHistorialPruebas from '../screens/PantallaHistorialPruebas';
 //Pruebas Cognitivas
 import PantallaPruebaCognitivaFluencia from '../screens/Pruebas/Cognitivas/PantallaPruebaCognitivaFluencia';
 import PantallaPruebaMiniCog from '../screens/Pruebas/Cognitivas/PantallaPruebaMiniCog';
@@ -57,30 +60,39 @@ import PantallaPruebaOARS from '../screens/Pruebas/Entorno/PantallaPruebaOARS';
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
-const StackNavigator = () => {
+
+
+const PrincipalNavigator = () => {
   return (
-    <Stack.Navigator initialRouteName="PantallaPruebas">
+    <Stack.Navigator initialRouteName="PantallaPrincipal">
       <Stack.Screen name="PantallaPrincipal" component={PantallaPrincipal} />
-      <Stack.Screen name="PantallaAgregarPaciente" component={PantallaAgregarPaciente} />
-      <Stack.Screen name="PantallaInicioApp" component={PantallaInicioApp} />
-      <Stack.Screen name="PantallaPruebas" component={PantallaPruebas} />
-      <Stack.Screen name="PantallaUbicacion" component={PantallaUbicacion} />
-      <Stack.Screen name="PantallaClima" component={PantallaClima} />
-      <Stack.Screen name="PantallaPruebaCognitivaFluencia" component={PantallaPruebaCognitivaFluencia} />
-      <Stack.Screen name="PantallaPruebaCESD7" component={PantallaPruebaCESD7} />
-      <Stack.Screen name="PantallaPruebaEvaBarrera" component={PantallaPruebaEvaBarrera} />
-      <Stack.Screen name="PantallaPruebaFuncionamiento" component={PantallaPruebaFuncionamiento} />
-      <Stack.Screen name="PantallaPruebaKatz" component={PantallaPruebaKatz} />
-      <Stack.Screen name="PantallaPruebaMaltrato" component={PantallaPruebaMaltrato} />
-      <Stack.Screen name="PantallaPruebaMiniCog" component={PantallaPruebaMiniCog} />
-      <Stack.Screen name="PantallaPruebaMiniMental" component={PantallaPruebaMiniMental} />
-      <Stack.Screen name="PantallaPruebaMNASF" component={PantallaPruebaMNASF} />
-      <Stack.Screen name="PantallaPruebaMOCA" component={PantallaPruebaMOCA} />
+      <Stack.Screen name="PantallaVerPaciente" component={PantallaVerPaciente} options={{ headerShown: true }}/>
+      <Stack.Screen name="PantallaEditarPaciente" component={PantallaEditarPaciente} options={{ headerShown: true }}/>
+      <Stack.Screen name="PantallaHistorialPruebas" component={PantallaHistorialPruebas} options={{ headerShown: true }}/>
+      <Stack.Screen name="PantallaPruebas" component={PantallaPruebas} options={{ headerShown: true }}/>
+      <Stack.Screen name="PantallaPruebaCognitivaFluencia" component={PantallaPruebaCognitivaFluencia} options={{ headerShown: false }}/>
+      <Stack.Screen name="PantallaPruebaCESD7" component={PantallaPruebaCESD7} options={{ headerShown: false }}/>
+      <Stack.Screen name="PantallaPruebaEvaBarrera" component={PantallaPruebaEvaBarrera} options={{ headerShown: false }}/>
+      <Stack.Screen name="PantallaPruebaFuncionamiento" component={PantallaPruebaFuncionamiento} options={{ headerShown: false }}/>
+      <Stack.Screen name="PantallaPruebaKatz" component={PantallaPruebaKatz}  options={{ headerShown: false }}/>
+      <Stack.Screen name="PantallaPruebaMaltrato" component={PantallaPruebaMaltrato} options={{ headerShown: false }}/>
+      <Stack.Screen name="PantallaPruebaMiniCog" component={PantallaPruebaMiniCog} options={{ headerShown: false }}/>
+      <Stack.Screen name="PantallaPruebaMiniMental" component={PantallaPruebaMiniMental} options={{ headerShown: false }}/>
+      <Stack.Screen name="PantallaPruebaMNASF" component={PantallaPruebaMNASF} options={{ headerShown: false }}/>
+      <Stack.Screen name="PantallaPruebaMOCA" component={PantallaPruebaMOCA} options={{ headerShown: false }}/>
       <Stack.Screen name="PantallaPruebaMUST" component={PantallaPruebaMUST} />
       <Stack.Screen name="PantallaPruebaOARS" component={PantallaPruebaOARS} />
       <Stack.Screen name="PantallaPruebaSARCF" component={PantallaPruebaSARCF} />
       <Stack.Screen name="PantallaPruebaVisual" component={PantallaPruebaVisual} />
       <Stack.Screen name="PantallaPruebaGDS15" component={PantallaPruebaGDS15} />
+    </Stack.Navigator>
+  );
+};
+const AgregarNavigator = () => {
+  return (
+    <Stack.Navigator initialRouteName="PantallaAgregarPaciente">
+      <Stack.Screen name="PantallaAgregarPaciente" component={PantallaAgregarPaciente} />
+      <Stack.Screen name="PantallaPrincipal" component={PantallaPrincipal} />
     </Stack.Navigator>
   );
 };
@@ -99,7 +111,7 @@ const DrawerNavigator = () => {
       />
       <Drawer.Screen
         name="Inicio"
-        component={PantallaPrincipal}
+        component={PrincipalNavigator}
         options={{
           // eslint-disable-next-line react/no-unstable-nested-components
           drawerIcon: ({ color, size }: { color: string; size: number }) => (
@@ -108,18 +120,8 @@ const DrawerNavigator = () => {
         }}
       />
       <Drawer.Screen
-        name="Pruebas"
-        component={StackNavigator}
-        options={{
-          // eslint-disable-next-line react/no-unstable-nested-components
-          drawerIcon: ({ color, size }: { color: string; size: number }) => (
-            <IonIcons name="apps" color={color} size={size} />
-          ),
-        }}
-      />
-      <Drawer.Screen
         name="Agregar Paciente"
-        component={PantallaAgregarPaciente}
+        component={AgregarNavigator}
         options={{
           // eslint-disable-next-line react/no-unstable-nested-components
           drawerIcon: ({ color, size }: { color: string; size: number }) => (
@@ -134,7 +136,7 @@ const DrawerNavigator = () => {
             options={{
               // eslint-disable-next-line react/no-unstable-nested-components
               drawerIcon: ({ color, size }: { color: string; size: number }) => (
-                <IonIcons name="person-add" color={color} size={size} />
+                <IonIcons name="location" color={color} size={size} />
               ),
             }}
           />
@@ -145,18 +147,18 @@ const DrawerNavigator = () => {
             options={{
               // eslint-disable-next-line react/no-unstable-nested-components
               drawerIcon: ({ color, size }: { color: string; size: number }) => (
-                <IonIcons name="person-add" color={color} size={size} />
+                <IonIcons name="cloud" color={color} size={size} />
               ),
             }}
           />
-
+{ /*
           <Drawer.Screen
             name="Prueba Base de Datos"
             component={PruebaBaseDatosSQLite}
             options={{
               // eslint-disable-next-line react/no-unstable-nested-components
               drawerIcon: ({ color, size }: { color: string; size: number }) => (
-                <IonIcons name="person-add" color={color} size={size} />
+                <IonIcons name="database" color={color} size={size} />
               ),
             }}
           />
@@ -168,17 +170,18 @@ const DrawerNavigator = () => {
             options={{
               // eslint-disable-next-line react/no-unstable-nested-components
               drawerIcon: ({ color, size }: { color: string; size: number }) => (
-                <IonIcons name="person-add" color={color} size={size} />
+                <IonIcons name="cloud" color={color} size={size} />
               ),
             }}
           />
+          */}
           <Drawer.Screen
             name="Video"
             component={PantallaVideo}
             options={{
               // eslint-disable-next-line react/no-unstable-nested-components
               drawerIcon: ({ color, size }: { color: string; size: number }) => (
-                <IonIcons name="person-add" color={color} size={size} />
+                <IonIcons name="accessibility-outline" color={color} size={size} />
               ),
             }}
           />

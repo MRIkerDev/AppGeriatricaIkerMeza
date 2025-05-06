@@ -1,6 +1,6 @@
 // firebaseConfig.js
 import { initializeApp } from "firebase/app";
-import { getDatabase } from "firebase/database"; // 👈 Realtime Database
+import { getDatabase } from "firebase/database"; //  Realtime Database
 
 const firebaseConfig = {
   apiKey: "AIzaSyBmTN1xYEu3eebJ-1dsSkTZvT7Ud2RkudA",

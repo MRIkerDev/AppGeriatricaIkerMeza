@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import { guardarPaciente, marcarPacienteComoSincronizado } from '../../database/database';
+import { hayInternet } from '../../utils/checarInternet';
+import { guardarPacienteFirebase } from '../../utils/firebaseService'; // Función para guardar en Firebase
+
 import {
   View,
   Text,
@@ -17,9 +21,9 @@ const PantallaAgregarPaciente = ({ navigation }: any) => {
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [lugarNacimiento, setLugarNacimiento] = useState('');
   const [estadoCivil, setEstadoCivil] = useState('');
-  const [cuidadorPrincipal, setCuidadorPrincipal] = useState('');
+  const [cuidador, setCuidador] = useState('');
   const [escolaridad, setEscolaridad] = useState('');
-  const [ocupacionActual, setOcupacionActual] = useState('');
+  const [ocupacion, setOcupacion] = useState('');
 
   const [tabaquismo, setTabaquismo] = useState(false);
   const [alcoholismo, setAlcoholismo] = useState(false);
@@ -31,9 +35,9 @@ const PantallaAgregarPaciente = ({ navigation }: any) => {
   const [fracturas, setFracturas] = useState(false);
   const [alergias, setAlergias] = useState(false);
 
-  const [formVisible, setFormVisible] = useState(true);
+  const [formVisible] = useState(true);
 
-  const handleRegistrarPaciente = () => {
+  const handleRegistrarPaciente = async () => {
     if (!nombre || !edad) {
       Alert.alert('Error', 'Por favor ingrese nombre y edad');
       return;
@@ -45,9 +49,10 @@ const PantallaAgregarPaciente = ({ navigation }: any) => {
       fechaNacimiento,
       lugarNacimiento,
       estadoCivil,
-      cuidadorPrincipal,
+      cuidador,
       escolaridad,
-      ocupacionActual,
+      ocupacion,
+      enfermedades,
       antecedentes: {
         tabaquismo,
         alcoholismo,
@@ -59,13 +64,45 @@ const PantallaAgregarPaciente = ({ navigation }: any) => {
         fracturas,
         alergias,
       },
-      enfermedades,
+
     };
 
-    navigation.navigate('Inicio', { nuevoPaciente: paciente });
+    try {
+      const insertId = await guardarPaciente(paciente);
 
-    setNombre('');
-    setEdad('');
+      const internetDisponible = await hayInternet();
+      if (internetDisponible) {
+        const pacienteConId = { id: insertId, ...paciente };
+        await guardarPacienteFirebase(pacienteConId);
+        await marcarPacienteComoSincronizado(insertId);
+      }
+
+      Alert.alert('Éxito', 'Paciente registrado con éxito');
+      navigation.navigate('Inicio');
+
+
+      // Limpiar el formulario
+      setNombre('');
+      setEdad('');
+      setEnfermedades('');
+      setFechaNacimiento('');
+      setLugarNacimiento('');
+      setEstadoCivil('');
+      setCuidador('');
+      setEscolaridad('');
+      setOcupacion('');
+      setTabaquismo(false);
+      setAlcoholismo(false);
+      setBiomasa(false);
+      setCombe(false);
+      setVacunas(false);
+      setCirugias(false);
+      setTransfusiones(false);
+      setFracturas(false);
+      setAlergias(false);
+    } catch (error: any) {
+      console.log('Error al guardar paciente:', error?.message || error);
+    }
   };
 
   return (
@@ -109,11 +146,11 @@ const PantallaAgregarPaciente = ({ navigation }: any) => {
             onChangeText={setEstadoCivil}
             placeholder="Ingrese el Estado Civil"
           />
-          <Text style={styles.label}>Cuidador principal:</Text>
+          <Text style={styles.label}>Cuidador:</Text>
           <TextInput
             style={styles.input}
-            value={cuidadorPrincipal}
-            onChangeText={setCuidadorPrincipal}
+            value={cuidador}
+            onChangeText={setCuidador}
             placeholder="Ingrese el nombre del cuidador"
           />
           <Text style={styles.label}>Escolaridad:</Text>
@@ -126,9 +163,16 @@ const PantallaAgregarPaciente = ({ navigation }: any) => {
           <Text style={styles.label}>Ocupación:</Text>
           <TextInput
             style={styles.input}
-            value={ocupacionActual}
-            onChangeText={setOcupacionActual}
-            placeholder="Ingrese la ocupación actual"
+            value={ocupacion}
+            onChangeText={setOcupacion}
+            placeholder="Ingrese la ocupación"
+          />
+            <Text style={styles.label}>Enfermedades:</Text>
+          <TextInput
+            style={styles.input}
+            value={enfermedades}
+            onChangeText={setEnfermedades}
+            placeholder="Ingrese las enfermedades"
           />
           <Text style={styles.label}>Antecedentes Personales No Patológicos:</Text>
           <View style={styles.checkboxContainer}>
@@ -149,13 +193,7 @@ const PantallaAgregarPaciente = ({ navigation }: any) => {
               </View>
             ))}
           </View>
-          <Text style={styles.label}>Enfermedades:</Text>
-          <TextInput
-            style={styles.input}
-            value={enfermedades}
-            onChangeText={setEnfermedades}
-            placeholder="Ingrese las enfermedades"
-          />
+
           <Button title="Registrar Paciente" onPress={handleRegistrarPaciente} />
         </ScrollView>
       )}

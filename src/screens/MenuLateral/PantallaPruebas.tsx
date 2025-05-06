@@ -2,12 +2,15 @@
 import { View, Text, Button, StyleSheet, ScrollView } from 'react-native';
 
 const PantallaPruebas = ({ navigation, route }: any) => {
-  const { total } = route.params || {};
+  const { total, pacienteId } = route.params || {};
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Lista de Pruebas</Text>
-
+      <Button
+  title="Regresar al inicio"
+  onPress={() => navigation.navigate('PantallaPrincipal')}
+/>
       {total !== undefined && (
         <Text style={styles.totalText}>Total de la prueba: {total}</Text>
       )}
@@ -18,19 +21,29 @@ const PantallaPruebas = ({ navigation, route }: any) => {
           <Text style={styles.sectionTitle}>Pruebas Cognitivas</Text>
           <Button
             title="Prueba Cognitiva Fluencia Verbal Semantica"
-            onPress={() => navigation.navigate('PantallaPruebaCognitivaFluencia')}
+            onPress={() =>{console.log('Navegando a Fluencia con:', pacienteId);
+              navigation.navigate('PantallaPruebaCognitivaFluencia', {
+                pacienteId:pacienteId,
+              });
+            }}
           />
           <Button
             title="Prueba MiniCog"
-            onPress={() => navigation.navigate('PantallaPruebaMiniCog')}
+            onPress={() => navigation.navigate('PantallaPruebaMiniCog', {
+              pacienteId,
+            })}
           />
           <Button
             title="Prueba MiniMental"
-            onPress={() => navigation.navigate('PantallaPruebaMiniMental')}
+            onPress={() => navigation.navigate('PantallaPruebaMiniMental', {
+              pacienteId,
+            })}
           />
           <Button
             title="Prueba MOCA"
-            onPress={() => navigation.navigate('PantallaPruebaMOCA')}
+            onPress={() => navigation.navigate('PantallaPruebaMOCA', {
+              pacienteId,
+            })}
           />
         </View>
 
@@ -39,11 +52,15 @@ const PantallaPruebas = ({ navigation, route }: any) => {
           <Text style={styles.sectionTitle}>Pruebas Afectivas</Text>
           <Button
             title="Prueba CESD7"
-            onPress={() => navigation.navigate('PantallaPruebaCESD7')}
+            onPress={() => {console.log('ID del paciente en PantallaPruebas:', pacienteId); navigation.navigate('PantallaPruebaCESD7', {
+              pacienteId,
+            });}}
           />
           <Button
             title="Prueba GDS15"
-            onPress={() => navigation.navigate('PantallaPruebaGDS15')}
+            onPress={() => navigation.navigate('PantallaPruebaGDS15', {
+              pacienteId,
+            })}
           />
         </View>
 
@@ -52,19 +69,28 @@ const PantallaPruebas = ({ navigation, route }: any) => {
           <Text style={styles.sectionTitle}>Pruebas de Funcionamiento</Text>
           <Button
             title="Prueba Evaluacion de Barrera"
-            onPress={() => navigation.navigate('PantallaPruebaEvaBarrera')}
+            onPress={() => navigation.navigate('PantallaPruebaEvaBarrera', {
+              pacienteId,
+            })}
           />
           <Button
             title="Prueba Katz"
-            onPress={() => navigation.navigate('PantallaPruebaKatz')}
+            onPress={() => navigation.navigate('PantallaPruebaKatz', {
+              pacienteId,
+            })}
           />
          <Button
             title="Prueba Visual"
-            onPress={() => navigation.navigate('PantallaPruebaVisual')}
+            onPress={() => navigation.navigate('PantallaPruebaVisual', {
+              pacienteId,
+            })}
           />
           <Button
             title="Prueba Velocidad Sobre la Marcha"
-            onPress={() => navigation.navigate('PantallaPruebaFuncionamiento')}
+            onPress={() => navigation.navigate('PantallaPruebaFuncionamiento', {
+              pacienteId,
+
+            })}
           />
         </View>
 
@@ -73,15 +99,21 @@ const PantallaPruebas = ({ navigation, route }: any) => {
           <Text style={styles.sectionTitle}>Pruebas Nutricionales</Text>
           <Button
             title="Prueba MNASF"
-            onPress={() => navigation.navigate('PantallaPruebaMNASF')}
+            onPress={() => navigation.navigate('PantallaPruebaMNASF', {
+                pacienteId,
+            })}
           />
           <Button
             title="Prueba MUST"
-            onPress={() => navigation.navigate('PantallaPruebaMUST')}
+            onPress={() => navigation.navigate('PantallaPruebaMUST', {
+              pacienteId,
+            })}
           />
            <Button
             title="Prueba SARCF"
-            onPress={() => navigation.navigate('PantallaPruebaSARCF')}
+            onPress={() => navigation.navigate('PantallaPruebaSARCF', {
+              pacienteId,
+            })}
           />
         </View>
 
@@ -91,11 +123,15 @@ const PantallaPruebas = ({ navigation, route }: any) => {
           <Text style={styles.sectionTitle}>Pruebas de Entorno</Text>
           <Button
             title="Prueba Maltrato"
-            onPress={() => navigation.navigate('PantallaPruebaMaltrato')}
+            onPress={() => navigation.navigate('PantallaPruebaMaltrato', {
+              pacienteId,
+            })}
           />
            <Button
             title="Prueba OARS"
-            onPress={() => navigation.navigate('PantallaPruebaOARS')}
+            onPress={() => navigation.navigate('PantallaPruebaOARS', {
+              pacienteId,
+            })}
           />
 
 
