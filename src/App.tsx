@@ -1,13 +1,7 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
+// App.tsx
 import React from 'react';
-import AppNavigator from './navigation/AppNavigator';  
-import 'react-native-gesture-handler';
+import AppNavigator from './navigation/AppNavigator'; // Importa tu AppNavigator
+
 const App = () => {
   return <AppNavigator />;
 };
