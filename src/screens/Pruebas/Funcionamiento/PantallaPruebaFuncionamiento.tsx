@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, TextInput, StyleSheet, PermissionsAndroid, Platform } from 'react-native';
-// Importamos acelerómetro de react-native-sensors
-import { accelerometer } from 'react-native-sensors';
+//  acelerómetro de react-native-sensors
+import { accelerometer, gyroscope } from 'react-native-sensors';
+
 
 const PantallaPruebaFuncionamiento = ({ navigation }: any) => {
   const [tiempo, setTiempo] = useState(0);
@@ -10,10 +11,9 @@ const PantallaPruebaFuncionamiento = ({ navigation }: any) => {
   const [velocidad, setVelocidad] = useState(0);
   const [observaciones, setObservaciones] = useState('');
   const [aceleracion, setAceleracion] = useState({ x: 0, y: 0, z: 0 });
+  const [giroscopio, setGiroscopio] = useState({ x: 0, y: 0, z: 0 });
 
   const color = '#8A2BE2';
-  let acelerometro: any;
-
   // Timer
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -27,9 +27,12 @@ const PantallaPruebaFuncionamiento = ({ navigation }: any) => {
     return () => clearInterval(timer);
   }, [corriendo]);
 
-  // Acelerómetro
+  // Acelerometro
   useEffect(() => {
-    const startSensor = async () => {
+    let acelerometroSub: any;
+    let giroscopioSub: any;
+
+    const startSensors = async () => {
       if (Platform.OS === 'android') {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.BODY_SENSORS,
@@ -40,22 +43,28 @@ const PantallaPruebaFuncionamiento = ({ navigation }: any) => {
         }
       }
 
-      // Se suscribe al acelerómetro
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      acelerometro = accelerometer.subscribe(({ x, y, z }) => {
+      // Acelerómetro
+      acelerometroSub = accelerometer.subscribe(({ x, y, z }) => {
         setAceleracion({ x, y, z });
 
-        // Si la aceleración supera un umbral, empieza el temporizador
         const magnitud = Math.sqrt(x * x + y * y + z * z);
         if (magnitud > 1.2 && !corriendo) {
           setCorriendo(true);
         }
       });
+
+      // Giroscopio
+      giroscopioSub = gyroscope.subscribe(({ x, y, z }) => {
+        setGiroscopio({ x, y, z });
+      });
     };
 
-    startSensor();
+    startSensors();
 
-    return () => acelerometro?.unsubscribe();
+    return () => {
+      acelerometroSub?.unsubscribe();
+      giroscopioSub?.unsubscribe();
+    };
   }, [corriendo]);
 
   const calcularDistancia = () => {
@@ -116,6 +125,9 @@ const PantallaPruebaFuncionamiento = ({ navigation }: any) => {
           <Text style={{ paddingLeft: 10 }}>Velocidad: {velocidad} m/s</Text>
           <Text style={{ paddingLeft: 10 }}>
             Aceleración: X: {aceleracion.x?.toFixed(2)} Y: {aceleracion.y?.toFixed(2)} Z: {aceleracion.z?.toFixed(2)}
+          </Text>
+          <Text style={{ paddingLeft: 10 }}>
+            Giroscopio: X: {giroscopio.x.toFixed(2)} Y: {giroscopio.y.toFixed(2)} Z: {giroscopio.z.toFixed(2)}
           </Text>
         </View>
       </View>
