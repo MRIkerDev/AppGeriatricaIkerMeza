@@ -2,8 +2,8 @@
 import { db } from '../../firebaseConfig'; 
 import { ref, set , remove} from 'firebase/database';
 
-
-
+//CON INTERNET
+//AGREGAR PACIENTE
 export const guardarPacienteFirebase = async (paciente: any) => {
   try {
     const pacienteRef = ref(db, `pacientes/${paciente.id}`);
@@ -14,6 +14,13 @@ export const guardarPacienteFirebase = async (paciente: any) => {
   }
 };
 
+//ELIMINAR
+export const eliminarPacienteFirebase = async (pacienteId: string | number) => {
+  const referencia = ref(db, `pacientes/${pacienteId}`);
+  await remove(referencia);
+  console.log(`Paciente ${pacienteId} eliminado de Firebase`);
+};
+//AGREGAR PRUEBA
 export const guardarPruebaFirebase = async (pacienteId: number, nombrePrueba: string, puntaje: number) => {
   try {
     const fecha = new Date().toISOString();
@@ -35,11 +42,5 @@ export const guardarPruebaFirebase = async (pacienteId: number, nombrePrueba: st
   }
 };
 
-
-export const eliminarPacienteFirebase = async (pacienteId: string | number) => {
-  const referencia = ref(db, `pacientes/${pacienteId}`);
-  await remove(referencia);
-  console.log(`Paciente ${pacienteId} eliminado de Firebase`);
-};
 
 

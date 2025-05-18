@@ -2,7 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-import IonIcons from 'react-native-vector-icons/Ionicons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 //Pantallas Menu Lateral
 import PantallaInicioApp from '../screens/MenuLateral/PantallaInicioApp';
@@ -14,7 +14,14 @@ import PantallaClima from '../screens/MenuLateral/PantallaClima';
 import PantallaVideo from '../screens/MenuLateral/PantallaVideo';
 
 //Pantallas de Practicas
-
+import PruebaBaseDatosSQLite from '../screens/PracticasClase/PruebaBaseDatosSQLite';
+import PruebaBaseDatosFirebase from '../screens/PracticasClase/PruebaBaseDatosFirebase';
+import PantallaMultiAsyncStorage from '../screens/PracticasClase/PantallaMultiAsyncStorage';
+import PantallaAsyncStorage from '../screens/PracticasClase/PantallaAsyncStorage';
+import PantallaArchivoTexto from '../screens/PracticasClase/PantallaArchivoTexto';
+import PantallaPermisoCamara from '../screens/PracticasClase/PantallaPermisoCamara';
+import PantallaPermisosVisual from '../screens/PracticasClase/PantallaPermisosVisual';
+import PantallaPermisosCard from '../screens/PracticasClase/PantallaPermisosCard';
 
 //Pantallas
 import PantallaVerPaciente from '../screens/PantallaVerPaciente';
@@ -44,6 +51,7 @@ import PantallaPruebaSARCF from '../screens/Pruebas/Nutricionales/PantallaPrueba
 //Pruebas Entorno
 import PantallaPruebaMaltrato from '../screens/Pruebas/Entorno/PantallaPruebaMaltrato';
 import PantallaPruebaOARS from '../screens/Pruebas/Entorno/PantallaPruebaOARS';
+import PantallaPedirPermisoCamara from '../screens/PracticasClase/PantallaPedirPermisoCamara';
 
 
 
@@ -98,24 +106,23 @@ const AgregarNavigator = () => {
 };
 
 const DrawerNavigator = () => {
-  return (
-    <Drawer.Navigator
-      screenOptions={{
-        drawerPosition: 'left',
-        headerShown: true,
-      }}
-    >
-       <Drawer.Screen
-        name=" "
-        component={PantallaInicioApp}
-      />
-      <Drawer.Screen
+        return (
+          <Drawer.Navigator
+            screenOptions={{
+              drawerPosition: 'left',
+              headerShown: true,
+            }}
+          >
+            <Drawer.Screen
+              name=" "
+              component={PantallaInicioApp}
+            />
+          <Drawer.Screen
         name="Inicio"
         component={PrincipalNavigator}
         options={{
-          // eslint-disable-next-line react/no-unstable-nested-components
-          drawerIcon: ({ color, size }: { color: string; size: number }) => (
-            <IonIcons name="home" color={color} size={size} />
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="home" color={color} size={size} />
           ),
         }}
       />
@@ -123,42 +130,46 @@ const DrawerNavigator = () => {
         name="Agregar Paciente"
         component={AgregarNavigator}
         options={{
-          // eslint-disable-next-line react/no-unstable-nested-components
-          drawerIcon: ({ color, size }: { color: string; size: number }) => (
-            <IonIcons name="person-add" color={color} size={size} />
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="person-add" color={color} size={size} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Ubicacion"
+        component={PantallaUbicacion}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="location" color={color} size={size} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Clima"
+        component={PantallaClima}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="cloud" color={color} size={size} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Video"
+        component={PantallaVideo}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="videocam-outline" color={color} size={size} />
           ),
         }}
       />
 
-    <Drawer.Screen
-            name="Ubicacion"
-            component={PantallaUbicacion}
-            options={{
-              // eslint-disable-next-line react/no-unstable-nested-components
-              drawerIcon: ({ color, size }: { color: string; size: number }) => (
-                <IonIcons name="location" color={color} size={size} />
-              ),
-            }}
-          />
-
-          <Drawer.Screen
-            name="Clima"
-            component={PantallaClima}
-            options={{
-              // eslint-disable-next-line react/no-unstable-nested-components
-              drawerIcon: ({ color, size }: { color: string; size: number }) => (
-                <IonIcons name="cloud" color={color} size={size} />
-              ),
-            }}
-          />
-{ /*
           <Drawer.Screen
             name="Prueba Base de Datos"
             component={PruebaBaseDatosSQLite}
             options={{
               // eslint-disable-next-line react/no-unstable-nested-components
               drawerIcon: ({ color, size }: { color: string; size: number }) => (
-                <IonIcons name="database" color={color} size={size} />
+                <Ionicons name="videocam-outline" color={color} size={size} />
               ),
             }}
           />
@@ -170,22 +181,85 @@ const DrawerNavigator = () => {
             options={{
               // eslint-disable-next-line react/no-unstable-nested-components
               drawerIcon: ({ color, size }: { color: string; size: number }) => (
-                <IonIcons name="cloud" color={color} size={size} />
+                <Ionicons name="videocam-outline" color={color} size={size} />
               ),
             }}
           />
-          */}
+
           <Drawer.Screen
-            name="Video"
-            component={PantallaVideo}
+            name="Prueba Async Storage"
+            component={PantallaAsyncStorage}
             options={{
               // eslint-disable-next-line react/no-unstable-nested-components
               drawerIcon: ({ color, size }: { color: string; size: number }) => (
-                <IonIcons name="accessibility-outline" color={color} size={size} />
+                <Ionicons name="videocam-outline" color={color} size={size} />
               ),
             }}
           />
+
+          <Drawer.Screen
+            name="Prueba Async Storage Multi"
+            component={PantallaMultiAsyncStorage}
+            options={{
+              // eslint-disable-next-line react/no-unstable-nested-components
+              drawerIcon: ({ color, size }: { color: string; size: number }) => (
+                <Ionicons name="videocam-outline" color={color} size={size} />
+              ),
+            }}
+          />
+           <Drawer.Screen
+            name="Prueba Archivo Texto"
+            component={PantallaArchivoTexto}
+            options={{
+              // eslint-disable-next-line react/no-unstable-nested-components
+              drawerIcon: ({ color, size }: { color: string; size: number }) => (
+                <Ionicons name="videocam-outline" color={color} size={size} />
+              ),
+            }}
+          />
+          <Drawer.Screen
+            name="Prueba Permiso Camara"
+            component={PantallaPermisoCamara}
+            options={{
+              // eslint-disable-next-line react/no-unstable-nested-components
+              drawerIcon: ({ color, size }: { color: string; size: number }) => (
+                <Ionicons name="videocam-outline" color={color} size={size} />
+              ),
+            }}
+          />
+          <Drawer.Screen
+            name="Prueba Permiso Visual"
+            component={PantallaPermisosVisual}
+            options={{
+              // eslint-disable-next-line react/no-unstable-nested-components
+              drawerIcon: ({ color, size }: { color: string; size: number }) => (
+                <Ionicons name="home" color={color} size={size} />
+              ),
+            }}
+          />
+          <Drawer.Screen
+            name="Prueba Permiso Card"
+            component={PantallaPermisosCard}
+            options={{
+              // eslint-disable-next-line react/no-unstable-nested-components
+              drawerIcon: ({ color, size }: { color: string; size: number }) => (
+                <Ionicons name="home" color={color} size={size} />
+              ),
+            }}
+          />
+          <Drawer.Screen
+            name="Prueba Permiso Camara 2"
+            component={PantallaPedirPermisoCamara}
+            options={{
+              // eslint-disable-next-line react/no-unstable-nested-components
+              drawerIcon: ({ color, size }: { color: string; size: number }) => (
+                <Ionicons name="home" color={color} size={size} />
+              ),
+            }}
+          />
+
         </Drawer.Navigator>
+
 
       );
 };

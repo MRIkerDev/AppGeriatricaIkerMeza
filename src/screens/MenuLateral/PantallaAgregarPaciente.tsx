@@ -68,12 +68,12 @@ const PantallaAgregarPaciente = ({ navigation }: any) => {
     };
 
     try {
-      const insertId = await guardarPaciente(paciente);
+      const insertId = await guardarPaciente(paciente);//AGREGAR A SQLITE
 
       const internetDisponible = await hayInternet();
       if (internetDisponible) {
         const pacienteConId = { id: insertId, ...paciente };
-        await guardarPacienteFirebase(pacienteConId);
+        await guardarPacienteFirebase(pacienteConId);//AGREGAR A FIREBASE
         await marcarPacienteComoSincronizado(insertId);
       }
 

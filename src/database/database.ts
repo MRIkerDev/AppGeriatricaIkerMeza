@@ -13,7 +13,7 @@ export const openDatabase = async () => {
 
 export const crearTablas = async () => {
   const database = await openDatabase();
-
+//tabla pacientes
   await database.executeSql(
     `CREATE TABLE IF NOT EXISTS pacientes (
      id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,7 +30,7 @@ export const crearTablas = async () => {
       sincronizado INTEGER DEFAULT 0
     );`
   );
-
+//tabla resultados
   await database.executeSql(
     `CREATE TABLE IF NOT EXISTS resultados (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,12 +42,14 @@ export const crearTablas = async () => {
       FOREIGN KEY (pacienteId) REFERENCES pacientes(id)
     );`
   );
+//tabla eliminaciones pendientes
   await database.executeSql(
     `CREATE TABLE IF NOT EXISTS eliminaciones_pendientes (
        id INTEGER PRIMARY KEY AUTOINCREMENT,
        pacienteId TEXT
     );`
   );
+//tabla ediciones pendientes
   await database.executeSql(
     `CREATE TABLE IF NOT EXISTS ediciones_pendientes (
        id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,6 +59,20 @@ export const crearTablas = async () => {
   );
 
 };
+
+export interface Paciente {
+  id: number;
+  nombre: string;
+  edad: number;
+  fechaNacimiento: string;
+  estadoCivil: string;
+  cuidador: string;
+  escolaridad: string;
+  ocupacion: string;
+  enfermedades: string;
+    antecedentes: Record<string, boolean>;
+  }
+
 
 //AGREGAR PACIENTE
 export const guardarPaciente = async (paciente: any): Promise<number> => {
@@ -86,29 +102,6 @@ export const guardarPaciente = async (paciente: any): Promise<number> => {
         },
         (_, error) => {
           console.log('Error al guardar paciente:', error);
-          reject(error);
-          return false;
-        }
-      );
-    });
-  });
-};
-
-//CARGAR PACIENTES
-export const cargarPacientes = async (): Promise<any[]> => {
-  const database = await openDatabase();
-  return new Promise((resolve, reject) => {
-    database.transaction((tx) => {
-      tx.executeSql(
-        'SELECT id, nombre, edad, fechaNacimiento, lugarNacimiento, estadoCivil, cuidador, escolaridad, ocupacion, enfermedades, antecedentes FROM pacientes',
-        [],
-        (_, { rows }) => {
-          const pacientes = rows.raw();
-          resolve(pacientes);
-        },
-        // Error
-        (_, error) => {
-          console.log('Error al cargar pacientes:', error);
           reject(error);
           return false;
         }
@@ -188,6 +181,30 @@ export const eliminarPaciente = (id: string): Promise<void> => {
   });
 };
 
+//CARGAR PACIENTES
+export const cargarPacientes = async (): Promise<any[]> => {
+  const database = await openDatabase();
+  return new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        'SELECT id, nombre, edad, fechaNacimiento, lugarNacimiento, estadoCivil, cuidador, escolaridad, ocupacion, enfermedades, antecedentes FROM pacientes',
+        [],
+        (_, { rows }) => {
+          const pacientes = rows.raw();
+          resolve(pacientes);
+        },
+        // Error
+        (_, error) => {
+          console.log('Error al cargar pacientes:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+
+//AGREGAR RESULTADO
 export const guardarResultado = async (pacienteId: number, nombrePrueba: string, resultado: number) => {
   const database = await openDatabase();
 
@@ -232,20 +249,6 @@ export const obtenerResultadosPorPaciente = async (pacienteId: number) => {
     });
   });
 };
-export interface Paciente {
-  id: number;
-  nombre: string;
-  edad: number;
-  fechaNacimiento: string;
-  estadoCivil: string;
-  cuidador: string;
-  escolaridad: string;
-  ocupacion: string;
-  enfermedades: string;
-    antecedentes: Record<string, boolean>;
-  }
-
-
 
   
 

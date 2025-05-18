@@ -74,6 +74,7 @@ export const sincronizarEdicionesPendientes = async () => {
     }
   }
 };
+
 export const sincronizarResultadosPendientes = async () => {
   const db = await openDatabase();
   const [result] = await db.executeSql('SELECT * FROM resultados WHERE sincronizado = 0');

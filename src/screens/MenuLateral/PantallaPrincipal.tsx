@@ -65,16 +65,14 @@ const PantallaPrincipal = ({ navigation, route }: any) => {
           onPress: async () => {
             try {
               const tieneInternet = await hayInternet();
-
-              if (tieneInternet) {
-                await eliminarPacienteFirebase(pacienteId);
-              } else {
-                await guardarEliminacionPendiente(pacienteId);
-                console.log('Guardado como eliminación pendiente');
-              }
-
               await eliminarPaciente(pacienteId);
               setPacientes((prev) => prev.filter((p) => p.id !== pacienteId));
+              if (tieneInternet) {
+                await eliminarPacienteFirebase(pacienteId);//ELIMINAR EN FIREBASE
+              } else {
+                await guardarEliminacionPendiente(pacienteId);//GUARDAR EN TABLA ELIMINACIONES PENDIENTES
+                console.log('Guardado como eliminación pendiente');
+              }
             } catch (error) {
               console.log('Error al eliminar paciente:', error);
             }
