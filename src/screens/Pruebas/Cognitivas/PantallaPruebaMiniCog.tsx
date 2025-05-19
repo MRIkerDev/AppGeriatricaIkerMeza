@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { hayInternet } from '../../../utils/checarInternet';
 import {
   StyleSheet,
   View,
@@ -22,8 +23,12 @@ export default function PantallaPruebaMiniCog({ navigation, route }: any) {
     const reloj = parseInt(puntuacionReloj) || 0;
     const total = palabras + reloj;
 
+    const hayNet = await hayInternet();
+    if (hayNet) {
+      guardarPruebaFirebase(pacienteId, 'MiniCog', total);
+      return;
+    }
       await guardarResultado(pacienteId, 'MiniCog', total); // SQLite
-      await guardarPruebaFirebase(pacienteId, 'MiniCog', total);
       Alert.alert('Resultado guardado correctamente');
       navigation.navigate('PantallaPruebas', { total: total, pacienteId });
     } catch (error) {

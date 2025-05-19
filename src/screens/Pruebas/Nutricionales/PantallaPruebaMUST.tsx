@@ -12,6 +12,7 @@ import {
 import { Picker } from '@react-native-picker/picker'; // Usa este si da error con 'react-native'
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { hayInternet } from '../../../utils/checarInternet';
 
 const PantallaPruebaMUST = ({ navigation, route }: any) => {
   const { pacienteId } = route.params || {};
@@ -39,7 +40,11 @@ const PantallaPruebaMUST = ({ navigation, route }: any) => {
     setPuntajeTotal(total );
     setClasificacion(clasif);
     await guardarResultado(pacienteId, 'MUST', total);
-    await guardarPruebaFirebase(pacienteId, 'MUST', total);
+    const hayNet = await hayInternet();
+    if (hayNet) {
+      guardarPruebaFirebase(pacienteId, 'MUST', total);
+      return;
+     }
     navigation.navigate('PantallaPruebas', { total: total, pacienteId: pacienteId });
     } catch (error) {
       console.error('Error al guardar el resultado:', error);

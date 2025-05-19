@@ -3,6 +3,7 @@ import { View, Text, TextInput, Button, SafeAreaView, StyleSheet, ScrollView, Al
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { hayInternet } from '../../../utils/checarInternet';
 const CATEGORIAS = ['animales', 'supermercado', 'frutas'] as const;
 const FILAS_TOTALES = 15;
 
@@ -49,12 +50,15 @@ const PantallaPruebaCognitivaFluencia = ({ navigation, route }: any) => {
 
   const manejarEnvio = async () => {
     try {
-
-
-      await guardarResultado(pacienteId, 'Fluencia Verbal Semántica', Total); // SQLite
-      await guardarPruebaFirebase(pacienteId, 'Fluencia Verbal Semántica', Total);
+      const hayNet = await hayInternet();
+      const total = Aciertos - Errores;
+      if (hayNet) {
+        guardarPruebaFirebase(pacienteId, 'Fluencia Verbal Semántica', total);
+        return;
+      }
+      await guardarResultado(pacienteId, 'Fluencia Verbal Semántica', total); // SQLite
       Alert.alert('Resultado guardado correctamente');
-      navigation.navigate('PantallaPruebas', { total: Total, pacienteId });
+      navigation.navigate('PantallaPruebas', { total: total, pacienteId });
     } catch (error) {
       console.error('Error al guardar el resultado:', error);
       Alert.alert('Error al guardar el resultado');

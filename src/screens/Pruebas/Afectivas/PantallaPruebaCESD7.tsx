@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
-
+import { hayInternet } from '../../../utils/checarInternet';
 const PantallaPruebaCESD7 = ({ navigation, route }: any) => {
   const { pacienteId } = route.params;
   const questions = [
@@ -39,11 +39,14 @@ const PantallaPruebaCESD7 = ({ navigation, route }: any) => {
   const evaluar = async () => {
     try {
       const total = answers.reduce((acc, curr) => acc + getPoints(curr), 0);
+      const hayNet = await hayInternet();
       setScore(total);
       setHasSymptoms(total >= 5);
       guardarResultado(pacienteId, 'CESD7', total);
-      guardarPruebaFirebase(pacienteId, 'CESD7', total);
-
+      if (hayNet) {
+       guardarPruebaFirebase(pacienteId, 'CESD7', total);
+       return;
+      }
     // Navegar y devolver puntuación a pantalla anterior
     navigation.navigate('PantallaPruebas', {total: total, pacienteId: pacienteId });
     } catch (error) {

@@ -2,9 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView, Switch } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
-import { ref, set } from 'firebase/database';
-import { db as firebaseDB } from '../../firebaseConfig';
 import { editarPaciente } from '../database/database';
+import { editarPacienteFirebase } from '../utils/firebaseService';
 
 const PantallaEditarPaciente = ({ route, navigation }: any) => {
   const { pacienteId, paciente } = route.params;
@@ -58,11 +57,9 @@ const PantallaEditarPaciente = ({ route, navigation }: any) => {
 
     try {
       await editarPaciente(pacienteActualizado);
-
-
       const estado = await NetInfo.fetch();
       if (estado.isConnected) {
-        await set(ref(firebaseDB, `pacientes/${pacienteId}`), pacienteActualizado);
+       await editarPacienteFirebase(pacienteId, pacienteActualizado);
         console.log('Paciente actualizado también en Firebase');
       }
 

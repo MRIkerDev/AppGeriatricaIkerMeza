@@ -3,6 +3,7 @@ import { StyleSheet, Text, TextInput, View, TouchableOpacity, Button, Alert, Scr
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { hayInternet } from '../../../utils/checarInternet';
 
 
 const evaluarRecursosSociales = (answers: { convivencia?: any; contactos?: any; telefono?: any; confianza?: any; cuantasPersonas?: any; visitas?: any; tipoCuidado?: any; }) => {
@@ -176,8 +177,12 @@ const PantallaPruebaOARS = ({ navigation, route }: any) => {
     const resultadoTexto = evaluarRecursosSociales(answers);
     setResultado(resultadoTexto);
     Alert.alert('Respuestas guardadas');
+    const hayNet = await hayInternet();
+    if (hayNet) {
+     guardarPruebaFirebase(pacienteId, 'OARS', parseInt(resultadoTexto));
+     return;
+    }
     await guardarResultado(pacienteId, 'OARS', parseInt(resultadoTexto));
-    await guardarPruebaFirebase(pacienteId, 'OARS', parseInt(resultadoTexto));
    navigation.navigate('PantallaPruebas', { total: parseInt(resultadoTexto), pacienteId: pacienteId });
     } catch(error){
       console.error('Error al guardar el resultado:', error);

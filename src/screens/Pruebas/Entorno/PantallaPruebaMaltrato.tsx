@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { hayInternet } from '../../../utils/checarInternet';
 
 // Tipos para cada respuesta por pregunta
 type Respuesta = {
@@ -113,8 +114,12 @@ const PantallaPruebaMaltrato = ({ navigation, route }: any) => {
     if (navigation && navigation.navigate) {
       navigation.navigate('PantallaPruebas', { total: puntaje }); // o el nombre que uses
     }
+    const hayNet = await hayInternet();
+    if (hayNet) {
+     guardarPruebaFirebase(pacienteId, 'Maltrato', puntaje);
+     return;
+    }
     await guardarResultado(pacienteId, 'Maltrato', puntaje);
-    await guardarPruebaFirebase(pacienteId, 'Maltrato', puntaje);
     Alert.alert('Evaluación completada', `Puntaje total: ${puntaje}`);
     console.log('Puntaje maltrato:', puntaje);
     console.log('Respuestas completas:', respuestas);

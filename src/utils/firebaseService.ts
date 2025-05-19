@@ -1,6 +1,6 @@
 // firebaseService.ts
 import { db } from '../../firebaseConfig'; 
-import { ref, set , remove} from 'firebase/database';
+import { ref, set , remove, update} from 'firebase/database';
 
 //CON INTERNET
 //AGREGAR PACIENTE
@@ -13,12 +13,22 @@ export const guardarPacienteFirebase = async (paciente: any) => {
     console.error('Error al guardar paciente en Firebase:', error);
   }
 };
-
 //ELIMINAR
 export const eliminarPacienteFirebase = async (pacienteId: string | number) => {
   const referencia = ref(db, `pacientes/${pacienteId}`);
   await remove(referencia);
   console.log(`Paciente ${pacienteId} eliminado de Firebase`);
+};
+
+//EDITAR
+export const editarPacienteFirebase = async (pacienteId: number, nuevosDatos: any) => {
+  try {
+    const pacienteRef = ref(db, `pacientes/${pacienteId}`);
+    await update(pacienteRef, nuevosDatos);
+    console.log(`Paciente ${pacienteId} actualizado en Firebase`);
+  } catch (error) {
+    console.error('Error al editar paciente en Firebase:', error);
+  }
 };
 //AGREGAR PRUEBA
 export const guardarPruebaFirebase = async (pacienteId: number, nombrePrueba: string, puntaje: number) => {

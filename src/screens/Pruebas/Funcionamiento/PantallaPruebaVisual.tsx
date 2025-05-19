@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, Button, Alert, ScrollView } from 'react-native';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { hayInternet } from '../../../utils/checarInternet';
 
 type NavigationProps = {
   navigation: any;
@@ -56,7 +57,11 @@ const PantallaPruebaVisual = ({ navigation, route }: NavigationProps) => {
 
     Alert.alert('Resultado', mensaje);
     await guardarResultado(pacienteId, 'Vision', total);
-    await guardarPruebaFirebase(pacienteId, 'Vision', total);
+    const hayNet = await hayInternet();
+    if (hayNet) {
+      guardarPruebaFirebase(pacienteId, 'Vision', total);
+      return;
+     }
     // Navegar y pasar el resultado
     navigation.navigate('PantallaPruebas', { total: total, pacienteId: pacienteId });
     } catch (error) {

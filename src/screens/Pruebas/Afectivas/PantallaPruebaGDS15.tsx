@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { hayInternet } from '../../../utils/checarInternet';
 import {
   View,
   Text,
@@ -53,9 +54,14 @@ const PantallaPruebaGDS15 = ({ navigation, route }: any) => {
 
   const handleRegistrar = async () => {
     try{
-      guardarResultado(pacienteId, 'GDS-15', calcularResultado());
-      guardarPruebaFirebase(pacienteId, 'GDS-15', calcularResultado());
+      const hayNet = await hayInternet();
       const resultado = calcularResultado();
+      if (hayNet) {
+        guardarPruebaFirebase(pacienteId, 'GDS-15', calcularResultado());
+        return;
+      }
+      guardarResultado(pacienteId, 'GDS-15', calcularResultado());
+
       Alert.alert('Resultado', `El puntaje de la prueba GDS-15 es: ${resultado}`);
       navigation.navigate('PantallaPruebas', { total: resultado, pacienteId });
     } catch (error) {

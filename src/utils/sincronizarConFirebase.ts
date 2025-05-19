@@ -1,8 +1,10 @@
 //sincronizarConFirebase.ts
-import { obtenerPacientesPendientes,marcarPacienteComoSincronizado} from '../database/database';
+import { obtenerPacientesPendientes,marcarPacienteComoSincronizado} from '../database/database';//PACIENTES PENDIENTES
+import { obtenerEliminacionesPendientes, eliminarEliminacionPendiente } from '../database/database';//ELIMINACIONES PENDIENTES
+import { obtenerEdicionesPendientes, eliminarEdicionPendiente } from '../database/database';//EDICIONES PENDIENTES
+import { obtenerResultadosPendientes, marcarResultadoComoSincronizado } from '../database/database';//RESULTADOS PENDIENTES
 import { hayInternet } from '../utils/checarInternet';
-import { eliminarPacienteFirebase, guardarPacienteFirebase, guardarPruebaFirebase } from '../utils/firebaseService';
-import { openDatabase } from '../database/database';
+import { editarPacienteFirebase, eliminarPacienteFirebase, guardarPacienteFirebase, guardarPruebaFirebase } from '../utils/firebaseService';
 
 
 
@@ -14,21 +16,13 @@ export const sincronizarConFirebase = async () => {
   }
 
   // 1. Pacientes nuevos
-  const pacientesPendientes = await obtenerPacientesPendientes();
-  for (let paciente of pacientesPendientes) {
-    try {
-      await guardarPacienteFirebase(paciente);
-      await marcarPacienteComoSincronizado(paciente.id);
-    } catch (error) {
-      console.log('Error al sincronizar paciente:', error);
-    }
-  }
+  await sincronizarPacientesPendientesFirebase();
 
   // 2. Pacientes eliminados
-  await eliminarPendientesFirebase();
+  await eliminarPacientesPendientesFirebase();
 
   // 3. Ediciones pendientes
-  await sincronizarEdicionesPendientes();
+  await sincronizarEdicionesPacientesPendientes();
 
   // 4. Resultados pendientes
   await sincronizarResultadosPendientes();
@@ -36,63 +30,95 @@ export const sincronizarConFirebase = async () => {
   console.log('Sincronización completa con Firebase');
 };
 
-export const eliminarPendientesFirebase = async () => {
-  const db = await openDatabase();
+//Guardar pacientes pendientes en Firebase
+export const sincronizarPacientesPendientesFirebase = async () => {
+  const internetDisponible = await hayInternet();
 
-  const [result] = await db.executeSql('SELECT pacienteId FROM eliminaciones_pendientes');
-  const pendientes: any[] = [];
-  for (let i = 0; i < result.rows.length; i++) {
-    pendientes.push(result.rows.item(i));
+  if (!internetDisponible) {
+    console.log('Sin conexión, no se puede sincronizar pacientes pendientes.');
+    return;
   }
 
-  for (let item of pendientes) {
-    try {
-      await eliminarPacienteFirebase(item.pacienteId);
-      await db.executeSql('DELETE FROM eliminaciones_pendientes WHERE pacienteId = ?', [item.pacienteId]);
-      console.log(`Eliminado paciente pendiente ${item.pacienteId} de Firebase`);
-    } catch (error) {
-      console.log('Error al eliminar pendiente de Firebase:', error);
+  try {
+    const pacientesPendientes = await obtenerPacientesPendientes();
+
+    for (const paciente of pacientesPendientes) {
+      await guardarPacienteFirebase(paciente);
+      await marcarPacienteComoSincronizado(paciente.id);
+      console.log(`Paciente ${paciente.id} sincronizado correctamente.`);
     }
+
+    console.log('Todos los pacientes pendientes fueron sincronizados.');
+  } catch (error) {
+    console.error('Error al sincronizar pacientes pendientes:', error);
   }
 };
 
+//Eliminar pacientes pendientes en Firebase
+export const eliminarPacientesPendientesFirebase = async () => {
+  const internetDisponible = await hayInternet();
+  if (!internetDisponible) {
+    console.log('Sin conexión, no se puede eliminar pacientes pendientes.');
+    return;
+  }
 
-export const sincronizarEdicionesPendientes = async () => {
-  const database = await openDatabase();
-  const [result] = await database.executeSql('SELECT * FROM ediciones_pendientes');
+  try {
+    const eliminaciones = await obtenerEliminacionesPendientes();
 
-  for (let i = 0; i < result.rows.length; i++) {
-    const { pacienteId, nuevosDatos } = result.rows.item(i);
-    const nuevosDatosParsed = JSON.parse(nuevosDatos);
-
-    try {
-      await guardarPacienteFirebase({ id: pacienteId, ...nuevosDatosParsed });
-      await database.executeSql('DELETE FROM ediciones_pendientes WHERE pacienteId = ?', [pacienteId]);
-      console.log(`Edición del paciente ${pacienteId} sincronizada`);
-    } catch (error) {
-      console.log('Error al sincronizar edición pendiente:', error);
+    for (const pacienteId of eliminaciones) {
+      await eliminarPacienteFirebase(pacienteId);
+      await eliminarEliminacionPendiente(pacienteId);
+      console.log(`Paciente ${pacienteId} eliminado en Firebase y sincronizado`);
     }
+  } catch (error) {
+    console.error('Error al sincronizar eliminaciones pendientes:', error);
+  }
+};
+
+//Sincronizar ediciones pendientes en Firebase
+export const sincronizarEdicionesPacientesPendientes = async () => {
+  const internetDisponible = await hayInternet();
+  if (!internetDisponible) return;
+
+  try {
+    const ediciones = await obtenerEdicionesPendientes();
+
+    for (const edicion of ediciones) {
+      await editarPacienteFirebase(edicion.pacienteId, edicion.nuevosDatos);
+      await eliminarEdicionPendiente(edicion.pacienteId);
+      console.log(`Paciente ${edicion.pacienteId} sincronizado con sus nuevos datos`);
+    }
+  } catch (error) {
+    console.error('Error al sincronizar ediciones pendientes:', error);
   }
 };
 
 export const sincronizarResultadosPendientes = async () => {
-  const db = await openDatabase();
-  const [result] = await db.executeSql('SELECT * FROM resultados WHERE sincronizado = 0');
+  const internetDisponible = await hayInternet();
+  if (!internetDisponible) return;
 
-  for (let i = 0; i < result.rows.length; i++) {
-    const row = result.rows.item(i);
-    try {
-      // Sincroniza el resultado con Firebase
-      await guardarPruebaFirebase(row.pacienteId.toString(), row.nombrePrueba, row.puntaje);
-      
-      // Marca el resultado como sincronizado en la base de datos local
-      await db.executeSql('UPDATE resultados SET sincronizado = 1 WHERE id = ?', [row.id]);
-      
-      console.log(`Resultado de ${row.nombrePrueba} sincronizado para paciente ${row.pacienteId}`);
-    } catch (error) {
-      console.log('Error al sincronizar resultado:', error);
+  try {
+    const resultados = await obtenerResultadosPendientes();
+
+    console.log('Resultados pendientes a sincronizar:', resultados);
+
+    for (const resultado of resultados) {
+      if (resultado.pacienteId == null) {
+        console.warn('Omitiendo resultado sin pacienteId:', resultado);
+        continue;
+      }
+
+      await guardarPruebaFirebase(
+        resultado.pacienteId.toString(),
+        resultado.nombrePrueba,
+        resultado.puntaje
+      );
+      await marcarResultadoComoSincronizado(resultado.id);
+      console.log('Sincronizado resultado:', resultado.id);
     }
+
+    console.log('Todos los resultados pendientes procesados.');
+  } catch (error) {
+    console.error('Error al sincronizar resultados:', error);
   }
 };
-
-

@@ -5,6 +5,8 @@ import { ScrollView } from 'react-native';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 import { Alert } from 'react-native';
+import { hayInternet } from '../../../utils/checarInternet';
+
 // Fuera de PantallaPruebaMNASF
 const RadioButton = ({ selected, onPress, label }: any) => (
   <TouchableOpacity style={styles.option} onPress={onPress}>
@@ -56,7 +58,11 @@ const PantallaPruebaMNASF = ({ navigation, route }: any) => {
 
     setClasificacion(clasif);
     await guardarResultado(pacienteId, 'MNASF', total);
-      await guardarPruebaFirebase(pacienteId, 'MNASF', total);
+    const hayNet = await hayInternet();
+    if (hayNet) {
+      guardarPruebaFirebase(pacienteId, 'MNASF', total);
+      return;
+     }
     // Navegar aquí directamente usando el total calculado
     navigation.navigate('PantallaPruebas', { total:total, pacienteId: pacienteId });
     } catch (error) {

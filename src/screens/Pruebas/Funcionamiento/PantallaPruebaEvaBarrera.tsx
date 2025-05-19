@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { hayInternet } from '../../../utils/checarInternet';
+
 // Preguntas del formulario
 const preguntas = [
   { pregunta: '¿Tiene dificultades para moverse dentro de su hogar?', tipo: 'si_no' },
@@ -109,9 +111,13 @@ const PantallaPruebaEvaBarrera = ({ navigation, route }: any) => {
 
 
       const pacienteId = route.params?.pacienteId;
+      const hayNet = await hayInternet();
+      if (hayNet) {
+        guardarPruebaFirebase(pacienteId, 'Evaluacion de Barrera', parseFloat(calif));
+        return;
+       }
       if (pacienteId) {
         await guardarResultado(pacienteId, 'Evaluacion de Barrera', parseFloat(calif));
-        await guardarPruebaFirebase(pacienteId, 'Evaluacion de Barrera', parseFloat(calif));
         console.log('Resultado guardado exitosamente.');
       } else {
         console.warn('No se proporcionó pacienteId.');

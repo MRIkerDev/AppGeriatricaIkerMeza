@@ -6,6 +6,7 @@ import {
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { hayInternet } from '../../../utils/checarInternet';
 
 const PantallaPruebaMiniMental = ({ navigation, route }: any) => {
   const { pacienteId } = route.params || {};
@@ -21,8 +22,12 @@ const PantallaPruebaMiniMental = ({ navigation, route }: any) => {
 
   const handleAceptar = async () => {
     try {
+   const hayNet = await hayInternet();
+   if (hayNet) {
+    guardarPruebaFirebase(pacienteId, 'MiniMental', parseInt(puntuacion));
+    return;
+   }
    await guardarResultado(pacienteId, 'MiniMental', parseInt(puntuacion)); // SQLite
-       await guardarPruebaFirebase(pacienteId, 'MiniMental', parseInt(puntuacion));
     console.log('Puntuación del Mini-Mental:', puntuacion);
 
     Alert.alert('Puntuación guardada', `Puntuación: ${puntuacion}`);

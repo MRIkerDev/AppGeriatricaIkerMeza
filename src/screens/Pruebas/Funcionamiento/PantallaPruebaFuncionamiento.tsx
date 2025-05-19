@@ -4,6 +4,7 @@ import { View, Text, Button, TextInput, StyleSheet, PermissionsAndroid, Platform
 import { accelerometer, gyroscope } from 'react-native-sensors';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { hayInternet } from '../../../utils/checarInternet';
 
 
 const PantallaPruebaFuncionamiento = ({ navigation, route }: any) => {
@@ -90,13 +91,18 @@ const PantallaPruebaFuncionamiento = ({ navigation, route }: any) => {
 
   const enviarDeVuelta = async () => {
     try {
+      const hayNet = await hayInternet();
       if (pacienteId) {
         await guardarResultado(pacienteId, 'Velocidad de la marcha', velocidad);
-        await guardarPruebaFirebase(pacienteId, 'Velocidad de la marcha', velocidad);
         console.log('Resultado guardado exitosamente.');
       } else {
         console.warn('No se proporcionó pacienteId.');
       }
+      if (hayNet) {
+        guardarPruebaFirebase(pacienteId, 'Velocidad de la marcha', velocidad);
+        return;
+       }
+
     let obs = observaciones;
     if (velocidad < 0.8) {
       obs = 'Disminución de desempeño como parte de los componentes que definen a la sarcopenia. ' + obs;

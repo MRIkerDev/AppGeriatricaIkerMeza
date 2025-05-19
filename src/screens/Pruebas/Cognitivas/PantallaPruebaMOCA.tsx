@@ -3,6 +3,7 @@ import { ImageBackground, Button, StyleSheet, Text, TextInput, Alert, ScrollView
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { hayInternet } from '../../../utils/checarInternet';
 
 const PantallaPruebaMOCA = ({ navigation,route }: any) => {
   const { pacienteId } = route.params;
@@ -23,8 +24,12 @@ const PantallaPruebaMOCA = ({ navigation,route }: any) => {
     try {
     Alert.alert('Formulario enviado', `Paciente: ${nombrePaciente}, Puntaje Final: ${puntajeFinal}`);
 
+    const hayNet = await hayInternet();
+    if (hayNet) {
+     guardarPruebaFirebase(pacienteId, 'MOCA', parseInt(puntajeFinal));
+     return;
+    }
     await guardarResultado(pacienteId, 'MOCA', parseInt(puntajeFinal)); // SQLite
-    await guardarPruebaFirebase(pacienteId, 'MOCA', parseInt(puntajeFinal));
     navigation.navigate('PantallaPruebas', {total: puntajeFinal });
     } catch (error) {
       console.error('Error al guardar el resultado:', error);

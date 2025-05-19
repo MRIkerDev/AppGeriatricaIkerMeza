@@ -3,6 +3,7 @@ import { StyleSheet, Text, TextInput, View, Alert, ScrollView, TouchableOpacity 
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
+import { hayInternet } from '../../../utils/checarInternet';
 
 const PantallaPruebaSARCF = ({ navigation, route }: any) => {
   const { pacienteId } = route.params || {};
@@ -21,7 +22,11 @@ try{
 
     const result = sum >= 4 ? 'Alta probabilidad de sarcopenia' : 'Baja probabilidad de sarcopenia';
     await guardarResultado(pacienteId, 'SARCF', sum);
-    await guardarPruebaFirebase(pacienteId, 'SARCF', sum);
+    const hayNet = await hayInternet();
+    if (hayNet) {
+      guardarPruebaFirebase(pacienteId, 'SARCF', sum);
+      return;
+     }
     Alert.alert('Resultado', `Puntaje total: ${sum}\nInterpretación: ${result}`);
     navigation.navigate('PantallaPruebas', { total: sum, pacienteId: pacienteId });
       } catch(error) {

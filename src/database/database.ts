@@ -204,14 +204,42 @@ export const cargarPacientes = async (): Promise<any[]> => {
   });
 };
 
-//AGREGAR RESULTADO
-export const guardarResultado = async (pacienteId: number, nombrePrueba: string, resultado: number) => {
+//BUSCAR PACIENTES
+export const obtenerPacientes = async () => {
   const database = await openDatabase();
 
-  // Verifica si el resultado ya existe
+  const [results] = await database.executeSql('SELECT * FROM pacientes');
+  const pacientes = [];
+
+  for (let i = 0; i < results.rows.length; i++) {
+    const row = results.rows.item(i);
+    pacientes.push({
+      ...row,
+      antecedentes: JSON.parse(row.antecedentes || '{}'),
+    });
+  }
+
+  return pacientes;
+};
+
+//AGREGAR RESULTADO DEL PACIENTE
+export const guardarResultado = async (
+  pacienteId: number,
+  nombrePrueba: string,
+  resultado: number
+) => {
+  if (pacienteId == null) {
+    console.warn('Intento de guardar resultado SIN pacienteId:', { pacienteId, nombrePrueba, resultado });
+    return;
+  }
+
+  const database = await openDatabase();
+  const fechaHoy = new Date().toISOString().split('T')[0];
+
+  // Verifica si el resultado ya existe hoy
   const [existingResult] = await database.executeSql(
     'SELECT * FROM resultados WHERE pacienteId = ? AND nombrePrueba = ? AND fecha = ?',
-    [pacienteId, nombrePrueba, new Date().toISOString().split('T')[0]]  // Solo verifica por fecha (puedes ajustar según necesites)
+    [pacienteId, nombrePrueba, fechaHoy]
   );
 
   if (existingResult.rows.length === 0) {
@@ -219,11 +247,12 @@ export const guardarResultado = async (pacienteId: number, nombrePrueba: string,
       'INSERT INTO resultados (pacienteId, nombrePrueba, puntaje, fecha, sincronizado) VALUES (?, ?, ?, ?, 0)',
       [pacienteId, nombrePrueba, resultado, new Date().toISOString()]
     );
-    console.log('Resultado insertado');
+    console.log('Resultado insertado localmente:', { pacienteId, nombrePrueba, resultado });
   } else {
-    console.log('Resultado ya existe, no se insertó');
+    console.log('Resultado ya existe para hoy:', { pacienteId, nombrePrueba });
   }
 };
+
 
 //OBTENER RESULTADOS POR PACIENTE
 export const obtenerResultadosPorPaciente = async (pacienteId: number) => {
@@ -254,25 +283,26 @@ export const obtenerResultadosPorPaciente = async (pacienteId: number) => {
 
 
 
-//buscar
-export const obtenerPacientes = async () => {
-  const database = await openDatabase();
+//database.ts PARA GUARDAR LOS QUE NO HAN SIDO SINCRONIZADOS
+export const marcarPacienteComoSincronizado = async (id: number): Promise<void> => {
+  const database = await openDatabase(); 
 
-  const [results] = await database.executeSql('SELECT * FROM pacientes');
-  const pacientes = [];
-
-  for (let i = 0; i < results.rows.length; i++) {
-    const row = results.rows.item(i);
-    pacientes.push({
-      ...row,
-      antecedentes: JSON.parse(row.antecedentes || '{}'),
+  return new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        'UPDATE pacientes SET sincronizado = 1 WHERE id = ?',
+        [id],
+        () => resolve(),
+        (_, error) => {
+          console.log('Error al marcar como sincronizado:', error);
+          reject(error);
+          return false;
+        }
+      );
     });
-  }
-
-  return pacientes;
+  });
 };
 
-//database.ts
 export const obtenerPacientesPendientes = async (): Promise<Paciente[]> => {
   const database = await openDatabase();
 
@@ -311,33 +341,173 @@ export const obtenerPacientesPendientes = async (): Promise<Paciente[]> => {
     });
   });
 };
-
-export const guardarEliminacionPendiente = async (pacienteId: string) => {
+//ELIMINACIONES DE PACIENTE PENDIENTES
+export const guardarEliminacionPendiente = async (pacienteId: number): Promise<void> => {
   const database = await openDatabase();
-  await database.executeSql(
-    'INSERT INTO eliminaciones_pendientes (pacienteId) VALUES (?)',
-    [pacienteId]
-  );
-};
-export const guardarEdicionPendiente = async (pacienteId: number, nuevosDatos: any) => {
-  const database = await openDatabase();
-  await database.executeSql(
-    'INSERT INTO ediciones_pendientes (pacienteId, nuevosDatos) VALUES (?, ?)',
-    [pacienteId, JSON.stringify(nuevosDatos)]
-  );
-};
-
-export const marcarPacienteComoSincronizado = async (id: number): Promise<void> => {
-  const database = await openDatabase(); 
 
   return new Promise((resolve, reject) => {
     database.transaction((tx) => {
       tx.executeSql(
-        'UPDATE pacientes SET sincronizado = 1 WHERE id = ?',
-        [id],
+        'INSERT INTO eliminaciones_pendientes (pacienteId) VALUES (?)',
+        [pacienteId],
         () => resolve(),
         (_, error) => {
-          console.log('Error al marcar como sincronizado:', error);
+          console.error('Error al registrar eliminación pendiente:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+export const obtenerEliminacionesPendientes = async (): Promise<number[]> => {
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        'SELECT pacienteId FROM eliminaciones_pendientes',
+        [],
+        (_, { rows }) => {
+          const ids: number[] = [];
+
+          for (let i = 0; i < rows.length; i++) {
+            ids.push(parseInt(rows.item(i).pacienteId));
+          }
+
+          resolve(ids);
+        },
+        (_, error) => {
+          console.error('Error al obtener eliminaciones pendientes:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+
+export const eliminarEliminacionPendiente = async (pacienteId: number): Promise<void> => {
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        'DELETE FROM eliminaciones_pendientes WHERE pacienteId = ?',
+        [pacienteId],
+        () => resolve(),
+        (_, error) => {
+          console.error('Error al eliminar eliminación pendiente:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+//EDICIONES DE PACIENTE PENDIENTES
+export const guardarEdicionPendiente = async (pacienteId: number, nuevosDatos: any): Promise<void> => {
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        'INSERT INTO ediciones_pendientes (pacienteId, nuevosDatos) VALUES (?, ?)',
+        [pacienteId, JSON.stringify(nuevosDatos)],
+        () => resolve(),
+        (_, error) => {
+          console.error('Error al registrar edición pendiente:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+export const obtenerEdicionesPendientes = async (): Promise<{ pacienteId: number, nuevosDatos: any }[]> => {
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        'SELECT * FROM ediciones_pendientes',
+        [],
+        (_, { rows }) => {
+          const ediciones: { pacienteId: number, nuevosDatos: any }[] = [];
+
+          for (let i = 0; i < rows.length; i++) {
+            const row = rows.item(i);
+            ediciones.push({
+              pacienteId: row.pacienteId,
+              nuevosDatos: JSON.parse(row.nuevosDatos),
+            });
+          }
+
+          resolve(ediciones);
+        },
+        (_, error) => {
+          console.error('Error al obtener ediciones pendientes:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+export const eliminarEdicionPendiente = async (pacienteId: number): Promise<void> => {
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        'DELETE FROM ediciones_pendientes WHERE pacienteId = ?',
+        [pacienteId],
+        () => resolve(),
+        (_, error) => {
+          console.error('Error al eliminar edición pendiente:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+//RESULTADOS PENDIENTES
+export const marcarResultadoComoSincronizado = async (resultadoId: number): Promise<void> => {
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        `UPDATE resultados SET sincronizado = 1 WHERE id = ?`,
+        [resultadoId],
+        () => resolve(),
+        (_, error) => {
+          console.error('Error al marcar resultado como sincronizado:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+export const obtenerResultadosPendientes = async (): Promise<any[]> => {
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        `SELECT * FROM resultados WHERE sincronizado = 0`,
+        [],
+        (_, { rows }) => {
+          const resultados: any[] = [];
+          for (let i = 0; i < rows.length; i++) {
+            resultados.push(rows.item(i));
+          }
+          resolve(resultados);
+        },
+        (_, error) => {
+          console.error('Error al obtener resultados no sincronizados:', error);
           reject(error);
           return false;
         }

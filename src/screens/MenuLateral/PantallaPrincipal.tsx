@@ -70,7 +70,8 @@ const PantallaPrincipal = ({ navigation, route }: any) => {
               if (tieneInternet) {
                 await eliminarPacienteFirebase(pacienteId);//ELIMINAR EN FIREBASE
               } else {
-                await guardarEliminacionPendiente(pacienteId);//GUARDAR EN TABLA ELIMINACIONES PENDIENTES
+                // eslint-disable-next-line radix
+                await guardarEliminacionPendiente(parseInt(pacienteId)); //GUARDAR EN TABLA ELIMINACIONES PENDIENTES
                 console.log('Guardado como eliminación pendiente');
               }
             } catch (error) {

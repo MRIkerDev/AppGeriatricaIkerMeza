@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Button, StyleSheet, FlatList, Alert } from 'react-native';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 import { guardarResultado } from '../../../database/database';
+import { hayInternet } from '../../../utils/checarInternet';
 
 const activities = [
   { id: '1', name: 'Alimentación' },
@@ -30,14 +31,17 @@ const PantallaPruebaKatz = ({ navigation, route }: any) => {
   // Función para guardar y navegar al total
   const manejarEnvio = async () => {
     try {
+      const hayNet = await hayInternet();
       if (pacienteId) {
         await guardarResultado(pacienteId, 'Indice de Katz', totalScore);
-        await guardarPruebaFirebase(pacienteId, 'Indice de Katz', totalScore);
         console.log('Resultado guardado exitosamente.');
       } else {
         console.warn('No se proporcionó pacienteId.');
       }
-
+      if (hayNet) {
+        guardarPruebaFirebase(pacienteId, 'Indice de Katz', totalScore);
+        return;
+       }
     navigation.navigate('PantallaPruebas', { total: totalScore, pacienteId: pacienteId }); // Enviar el puntaje total
     Alert.alert('Respuestas guardadas correctamente');
   } catch (error) {
