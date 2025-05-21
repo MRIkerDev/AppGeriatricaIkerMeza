@@ -1,18 +1,13 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Image,
-  ImageBackground,
-  Pressable,
-  Alert,
-} from 'react-native';
-import { Picker } from '@react-native-picker/picker'; // Usa este si da error con 'react-native'
+'use client';
+
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Picker } from '@react-native-picker/picker';
 import { guardarResultado } from '../../../database/database';
 import { guardarPruebaFirebase } from '../../../utils/firebaseService';
 import { hayInternet } from '../../../utils/checarInternet';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const PantallaPruebaMUST = ({ navigation, route }: any) => {
   const { pacienteId } = route.params || {};
@@ -21,207 +16,426 @@ const PantallaPruebaMUST = ({ navigation, route }: any) => {
   const [enfermedadAguda, setEnfermedadAguda] = useState<boolean | null>(null);
   const [puntajeTotal, setPuntajeTotal] = useState<null | number>(null);
   const [clasificacion, setClasificacion] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const [mostrarResultado, setMostrarResultado] = useState(false);
+  const [todasRespondidas, setTodasRespondidas] = useState(false);
 
-  const calcularResultado = async() => {
-    try{
+  useEffect(() => {
+    // Verificar si todas las preguntas han sido respondidas
+    setTodasRespondidas(enfermedadAguda !== null);
+  }, [enfermedadAguda]);
 
-
+  const calcularResultado = () => {
     if (enfermedadAguda === null) {
-      Alert.alert('Por favor, responde si hay enfermedad aguda.');
+      Alert.alert('Campos incompletos', 'Por favor, responde si hay enfermedad aguda.');
       return;
     }
+
     const total = imc + pesoPerdido + (enfermedadAguda === true ? 2 : 0);
 
     let clasif = '';
-    if (total === 0) {clasif = 'Riesgo bajo';}
-    else if (total === 1) {clasif = 'Riesgo intermedio';}
-    else if (total >= 2) {clasif = 'Riesgo alto';}
+    if (total === 0) {
+      clasif = 'Riesgo bajo';
+    } else if (total === 1) {
+      clasif = 'Riesgo intermedio';
+    } else if (total >= 2) {
+      clasif = 'Riesgo alto';
+    }
 
-    setPuntajeTotal(total );
+    setPuntajeTotal(total);
     setClasificacion(clasif);
-    await guardarResultado(pacienteId, 'MUST', total);
-    const hayNet = await hayInternet();
-    if (hayNet) {
-      guardarPruebaFirebase(pacienteId, 'MUST', total);
-      return;
-     }
-    navigation.navigate('PantallaPruebas', { total: total, pacienteId: pacienteId });
+    setMostrarResultado(true);
+  };
+
+  const guardarYNavegar = async () => {
+    try {
+      setGuardando(true);
+
+      if (puntajeTotal === null) {
+        Alert.alert('Error', 'Por favor, calcula el resultado primero.');
+        setGuardando(false);
+        return;
+      }
+
+      await guardarResultado(pacienteId, 'MUST', puntajeTotal);
+
+      const hayNet = await hayInternet();
+      if (hayNet) {
+        await guardarPruebaFirebase(pacienteId, 'MUST', puntajeTotal);
+      }
+
+      setGuardando(false);
+      Alert.alert('Éxito', 'Resultado guardado correctamente', [
+        {
+          text: 'OK',
+          onPress: () =>
+            navigation.navigate('PantallaPruebas', {
+              total: puntajeTotal,
+              pacienteId: pacienteId,
+            }),
+        },
+      ]);
     } catch (error) {
       console.error('Error al guardar el resultado:', error);
-      Alert.alert('Error al guardar el resultado');
+      Alert.alert('Error', 'No se pudo guardar el resultado. Inténtalo de nuevo.');
+      setGuardando(false);
     }
   };
 
+  const getColorPorRiesgo = () => {
+    if (puntajeTotal === 0) {return '#4CAF50';} // Verde para riesgo bajo
+    if (puntajeTotal === 1) {return '#FFC107';} // Amarillo para riesgo intermedio
+    return '#F44336'; // Rojo para riesgo alto
+  };
+
+  const getIconoPorRiesgo = () => {
+    if (puntajeTotal === 0) {return 'checkmark-circle';}
+    if (puntajeTotal === 1) {return 'alert-circle';}
+    return 'warning';
+  };
+
+  const getRecomendacionPorRiesgo = () => {
+    if (puntajeTotal === 0) {
+      return 'Repetir cribado: Hospital - semanalmente. Comunidad - mensualmente.';
+    }
+    if (puntajeTotal === 1) {
+      return 'Observar: Hospital - documentar ingesta 3 días. Comunidad - repetir cribado mensualmente.';
+    }
+    return 'Tratar: Derivar a nutricionista o seguir guías locales. Mejorar y aumentar la ingesta nutricional.';
+  };
+
   return (
-    <ImageBackground
-      source={{
-        uri: 'https://marketplace.canva.com/EAF8IBXnfTc/1/0/900w/canva-turquesa-y-verde-acuarela-suave-sin-texto-fondo-de-pantalla-para-tel%C3%A9fono-iqYs3DblqD0.jpg',
-      }}
-      style={styles.backgroundImage}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Image
-          source={{
-            uri: 'https://imgs.search.brave.com/ww8GJexrj3FuSzidmYJCGcSUJiTms6XMIjvVgLfSM-g/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jb25j/ZXB0by5kZS93cC1j/b250ZW50L3VwbG9h/ZHMvMjAxNS8wMy9u/dXRyaWNpb24tMS1l/MTU1MDcxMzQ0MjI4/OS5qcGc',
-          }}
-          style={styles.logo}
-        />
-        <Text style={styles.title}>Evaluación Nutricional MUST</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-        <Text style={styles.label}>Paso 1: Puntaje IMC</Text>
-        <View style={styles.pickerBox}>
-          <Picker selectedValue={imc} onValueChange={(value) => setImc(value)}>
-            <Picker.Item label="IMC > 20 kg/m² - 0 puntos" value={0} />
-            <Picker.Item label="IMC 18.5 – 20 kg/m² - 1 punto" value={1} />
-            <Picker.Item label="IMC < 18.5 - 2 puntos" value={2} />
-          </Picker>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#0A2463" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Evaluación MUST</Text>
+      </View>
+
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Tarjeta de instrucciones */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="information-circle" size={24} color="#0A2463" />
+            <Text style={styles.cardTitle}>Instrucciones</Text>
+          </View>
+          <Text style={styles.cardText}>
+            La herramienta MUST (Malnutrition Universal Screening Tool) evalúa el riesgo de malnutrición en adultos.
+            Complete los tres pasos para obtener una puntuación total.
+          </Text>
         </View>
 
-        <Text style={styles.label}>Paso 2: Pérdida de peso</Text>
-        <View style={styles.pickerBox}>
-          <Picker
-            selectedValue={pesoPerdido}
-            onValueChange={(value) => setPesoPerdido(value)}
-          >
-            <Picker.Item label="< 5% - 0 puntos" value={0} />
-            <Picker.Item label="5 - 10% - 1 punto" value={1} />
-            <Picker.Item label="> 10% - 2 puntos" value={2} />
-          </Picker>
+        {/* Paso 1: IMC */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="body" size={24} color="#0A2463" />
+            <Text style={styles.cardTitle}>Paso 1: Puntaje IMC</Text>
+          </View>
+          <Text style={styles.cardText}>Seleccione el rango de IMC del paciente:</Text>
+          <View style={styles.pickerContainer}>
+            <Picker selectedValue={imc} onValueChange={(value) => setImc(value)} style={styles.picker} mode="dropdown">
+              <Picker.Item label="IMC > 20 kg/m² - 0 puntos" value={0} />
+              <Picker.Item label="IMC 18.5 – 20 kg/m² - 1 punto" value={1} />
+              <Picker.Item label="IMC < 18.5 - 2 puntos" value={2} />
+            </Picker>
+          </View>
         </View>
 
-        <Text style={styles.label}>
-          Paso 3: ¿Hay enfermedad aguda sin ingesta nutricional?
-        </Text>
-        <View style={styles.options}>
-          <Pressable
-            style={[
-              styles.optionButton,
-              enfermedadAguda === true && styles.selected,
-            ]}
-            onPress={() => setEnfermedadAguda(true)}
-          >
-            <Text style={styles.optionText}>Sí</Text>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.optionButton,
-              enfermedadAguda === false && styles.selected,
-            ]}
-            onPress={() => setEnfermedadAguda(false)}
-          >
-            <Text style={styles.optionText}>No</Text>
-          </Pressable>
+        {/* Paso 2: Pérdida de peso */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="trending-down" size={24} color="#0A2463" />
+            <Text style={styles.cardTitle}>Paso 2: Pérdida de peso</Text>
+          </View>
+          <Text style={styles.cardText}>Seleccione el porcentaje de pérdida de peso en los últimos 3-6 meses:</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={pesoPerdido}
+              onValueChange={(value) => setPesoPerdido(value)}
+              style={styles.picker}
+              mode="dropdown"
+            >
+              <Picker.Item label="< 5% - 0 puntos" value={0} />
+              <Picker.Item label="5 - 10% - 1 punto" value={1} />
+              <Picker.Item label="> 10% - 2 puntos" value={2} />
+            </Picker>
+          </View>
         </View>
 
-        <Pressable style={styles.button} onPress={calcularResultado}>
-          <Text style={styles.buttonText}>Obtener Resultado</Text>
-        </Pressable>
+        {/* Paso 3: Enfermedad aguda */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="medkit" size={24} color="#0A2463" />
+            <Text style={styles.cardTitle}>Paso 3: Enfermedad aguda</Text>
+          </View>
+          <Text style={styles.cardText}>
+            ¿Hay enfermedad aguda y ha habido o es probable que no haya aporte nutricional por más de 5 días?
+          </Text>
+          <View style={styles.optionsContainer}>
+            <TouchableOpacity
+              style={[styles.optionButton, enfermedadAguda === true && styles.optionSelected]}
+              onPress={() => setEnfermedadAguda(true)}
+            >
+              <Ionicons
+                name={enfermedadAguda === true ? 'checkmark-circle' : 'ellipse-outline'}
+                size={24}
+                color={enfermedadAguda === true ? '#ffffff' : '#0A2463'}
+              />
+              <Text style={[styles.optionText, enfermedadAguda === true && styles.optionTextSelected]}>
+                Sí (2 puntos)
+              </Text>
+            </TouchableOpacity>
 
-        {puntajeTotal !== null && (
-          <View style={styles.resultBox}>
-            <Text style={styles.resultText}>Puntaje total: {puntajeTotal}</Text>
-            <Text style={styles.resultText}>Clasificación: {clasificacion}</Text>
+            <TouchableOpacity
+              style={[styles.optionButton, enfermedadAguda === false && styles.optionSelected]}
+              onPress={() => setEnfermedadAguda(false)}
+            >
+              <Ionicons
+                name={enfermedadAguda === false ? 'checkmark-circle' : 'ellipse-outline'}
+                size={24}
+                color={enfermedadAguda === false ? '#ffffff' : '#0A2463'}
+              />
+              <Text style={[styles.optionText, enfermedadAguda === false && styles.optionTextSelected]}>
+                No (0 puntos)
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Botones de acción */}
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, !todasRespondidas && styles.actionButtonDisabled]}
+            onPress={calcularResultado}
+            disabled={!todasRespondidas}
+          >
+            <Ionicons name="calculator" size={20} color="#ffffff" />
+            <Text style={styles.actionButtonText}>Calcular Resultado</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Resultados */}
+        {mostrarResultado && puntajeTotal !== null && (
+          <View style={[styles.card, { borderColor: getColorPorRiesgo() }]}>
+            <View style={[styles.cardHeader, { backgroundColor: getColorPorRiesgo() }]}>
+              <Ionicons name={getIconoPorRiesgo()} size={24} color="#ffffff" />
+              <Text style={[styles.cardTitle, { color: '#ffffff' }]}>Resultado</Text>
+            </View>
+
+            <View style={styles.resultContainer}>
+              <Text style={styles.resultLabel}>Puntaje total:</Text>
+              <Text style={[styles.resultValue, { color: getColorPorRiesgo() }]}>{puntajeTotal}</Text>
+            </View>
+
+            <View style={styles.resultContainer}>
+              <Text style={styles.resultLabel}>Clasificación:</Text>
+              <Text style={[styles.resultValue, { color: getColorPorRiesgo() }]}>{clasificacion}</Text>
+            </View>
+
+            <View style={styles.recommendationContainer}>
+              <Text style={styles.recommendationTitle}>Recomendación:</Text>
+              <Text style={styles.recommendationText}>{getRecomendacionPorRiesgo()}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: getColorPorRiesgo() }]}
+              onPress={guardarYNavegar}
+              disabled={guardando}
+            >
+              {guardando ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="save" size={20} color="#ffffff" />
+                  <Text style={styles.actionButtonText}>Guardar Resultado</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         )}
+
+        {/* Botón de regresar en la parte inferior */}
+        <TouchableOpacity
+          style={styles.bottomBackButton}
+          onPress={() => navigation.navigate('PantallaPruebas', { pacienteId })}
+        >
+          <Ionicons name="arrow-back-circle" size={20} color="#666666" />
+          <Text style={styles.bottomBackButtonText}>Volver a Pruebas</Text>
+        </TouchableOpacity>
       </ScrollView>
-    </ImageBackground>
+    </SafeAreaView>
   );
 };
 
-
 const styles = StyleSheet.create({
-  backgroundImage: {
+  safeArea: {
     flex: 1,
-    resizeMode: 'cover',
+    backgroundColor: '#f5f5f5',
   },
-  container: {
-    flexGrow: 1,
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    padding: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    padding: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
-  logo: {
-    width: 220,
-    height: 130,
-    marginBottom: 20,
+  backButton: {
+    padding: 8,
   },
-  title: {
-    fontSize: 24,
+  headerTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: 'white',
+    color: '#0A2463',
+    marginLeft: 16,
   },
-  label: {
-    alignSelf: 'flex-start',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 15,
-    color: 'white',
+  scrollView: {
+    flex: 1,
   },
-   input: {
-    width: '100%',
-    padding: 10,
-    marginVertical: 5,
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    backgroundColor: 'white',
+    borderColor: '#e0e0e0',
   },
-  pickerBox: {
-    width: '100%',
-    backgroundColor: 'white',
-    borderRadius: 5,
-    marginVertical: 10,
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#4D96FF',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginLeft: 8,
+  },
+  cardText: {
+    fontSize: 16,
+    color: '#333333',
+    padding: 16,
+    paddingTop: 12,
+  },
+  pickerContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
   },
   picker: {
-    width: '100%',
+    height: 50,
   },
-  options: {
+  optionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
-    marginVertical: 10,
+    marginHorizontal: 16,
+    marginBottom: 16,
   },
   optionButton: {
-    flex: 1,
-    padding: 12,
-    marginHorizontal: 5,
-    borderRadius: 5,
-    backgroundColor: '#ccc',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#0A2463',
+    flex: 1,
+    marginHorizontal: 4,
   },
-  selected: {
-    backgroundColor: 'green',
+  optionSelected: {
+    backgroundColor: '#0A2463',
+    borderColor: '#0A2463',
   },
   optionText: {
-    color: 'white',
-    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#0A2463',
+    marginLeft: 8,
   },
-  resultBox: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 5,
-    marginVertical: 20,
-    width: '100%',
+  optionTextSelected: {
+    color: '#ffffff',
   },
-  resultText: {
+  actionButtonsContainer: {
+    marginBottom: 16,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4D96FF',
+    padding: 16,
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  actionButtonDisabled: {
+    backgroundColor: '#cccccc',
+  },
+  actionButtonText: {
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'center',
+    marginLeft: 8,
   },
-  button: {
-    backgroundColor: 'green',
-    padding: 15,
-    borderRadius: 5,
-    width: '100%',
-    marginBottom: 30,
+  resultContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  buttonText: {
-    color: 'white',
+  resultLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  resultValue: {
     fontSize: 18,
-    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  recommendationContainer: {
+    padding: 16,
+  },
+  recommendationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginBottom: 8,
+  },
+  recommendationText: {
+    fontSize: 16,
+    color: '#333333',
+    lineHeight: 22,
+  },
+  bottomBackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  bottomBackButtonText: {
+    fontSize: 16,
+    color: '#666666',
+    marginLeft: 8,
   },
 });
 
